@@ -16,14 +16,14 @@ app.use(express.static('public'));
 //////////////////////////////////////
 //ROUTES TO SERVE HTML FILES
 //////////////////////////////////////
-// Default route to serve login.html
+// Default route to serve logon.html
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/login.html');
+    res.sendFile(__dirname + '/public/html/logon.html');
 });
 
 // Route to serve dashboard.html
 app.get('/dashboard', (req, res) => {
-    res.sendFile(__dirname + '/public/dashboard.html');
+    res.sendFile(__dirname + '/public/html/dashboard.html');
 });
 //////////////////////////////////////
 //END ROUTES TO SERVE HTML FILES
