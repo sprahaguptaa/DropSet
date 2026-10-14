@@ -18,7 +18,7 @@ app.use(express.static('public'));
 //////////////////////////////////////
 // Default route to serve logon.html
 app.get('/', (req, res) => {
-    res.sendFile(__dirname + '/public/logon.html');
+    res.sendFile(__dirname + '/public/login.html');
 });
 
 // Route to serve dashboard.html

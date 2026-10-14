@@ -1,0 +1,516 @@
+/* Gym app: calm, low-contrast base stylesheet
+   Link it in your HTML <head>:
+   <link rel="stylesheet" href="styles.css">
+*/
+
+:root {
+  --bg: #f3f5f4;          /* soft grey-green page background */
+  --surface: #ffffff;     /* cards, inputs */
+  --text: #26302d;        /* soft near-black */
+  --text-muted: #6b7773;  /* secondary text */
+  --border: #dde2df;      /* thin, quiet lines */
+  --accent: #5f8a7f;      /* muted sage */
+  --accent-hover: #517a70;
+  --accent-soft: #e6eeeb; /* light tint for highlights */
+  --danger: #b5605a;      /* muted red, only for delete/errors */
+
+  --radius: 10px;
+  --space: 1rem;
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text);
+  background: var(--bg);
+}
+
+/* Layout */
+main, .container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 1.5rem var(--space);
+}
+
+section {
+  margin-bottom: 2rem;
+}
+
+/* Header and navigation */
+header {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 1rem var(--space);
+}
+
+nav {
+  display: flex;
+  gap: 1.25rem;
+  flex-wrap: wrap;
+}
+
+nav a {
+  color: var(--text-muted);
+  text-decoration: none;
+  padding: 0.25rem 0;
+  border-bottom: 2px solid transparent;
+}
+
+nav a:hover,
+nav a.active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+/* Typography */
+h1, h2, h3 {
+  line-height: 1.25;
+  font-weight: 600;
+  margin: 0 0 0.75rem;
+}
+
+h1 { font-size: 1.75rem; }
+h2 { font-size: 1.35rem; }
+h3 { font-size: 1.1rem; }
+
+p {
+  margin: 0 0 1rem;
+}
+
+a {
+  color: var(--accent);
+}
+
+small, .muted {
+  color: var(--text-muted);
+}
+
+/* Cards (workouts, exercises, stats) */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 1.25rem;
+  margin-bottom: var(--space);
+}
+
+/* Lists: handy for exercise or workout lists */
+ul.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+ul.list li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+ul.list li:last-child {
+  border-bottom: none;
+}
+
+/* Buttons */
+button,
+.btn {
+  font: inherit;
+  font-weight: 500;
+  color: #fff;
+  background: var(--accent);
+  border: none;
+  border-radius: 8px;
+  padding: 0.6rem 1.1rem;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+button:hover,
+.btn:hover {
+  background: var(--accent-hover);
+}
+
+.btn-secondary {
+  color: var(--text);
+  background: var(--accent-soft);
+}
+
+.btn-secondary:hover {
+  background: #d9e5e1;
+}
+
+.btn-danger {
+  background: var(--danger);
+}
+
+/* Forms */
+label {
+  display: block;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 0.25rem;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  font: inherit;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 0.6rem 0.75rem;
+  margin-bottom: var(--space);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+/* Keyboard focus for buttons and links */
+button:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Tables (workout logs) */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--surface);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+th, td {
+  text-align: left;
+  padding: 0.7rem 0.9rem;
+  border-bottom: 1px solid var(--border);
+}
+
+th {
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--bg);
+}
+
+tr:last-child td {
+  border-bottom: none;
+}
+
+/* Small screens */
+@media (max-width: 480px) {
+  h1 { font-size: 1.5rem; }
+  .card { padding: 1rem; }
+}
+
+
+/* ============================================================
+   App layout (login + dashboard)
+   ============================================================ */
+
+/* Login page */
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 2rem;
+}
+
+.login-card button {
+  width: 100%;
+}
+
+.form-error {
+  color: var(--danger);
+  font-size: 0.9rem;
+  min-height: 1.4rem;
+  margin: 0 0 0.5rem;
+}
+
+/* Dashboard shell: sidebar + content */
+.app-shell {
+  display: grid;
+  grid-template-columns: 220px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  padding: 1.25rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.brand {
+  font-weight: 600;
+  font-size: 1.15rem;
+  padding: 0 0.5rem;
+}
+
+.sidebar nav {
+  flex-direction: column;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.sidebar nav a {
+  display: block;
+  padding: 0.55rem 0.75rem;
+  border: none;
+  border-radius: 8px;
+}
+
+.sidebar nav a:hover {
+  background: var(--bg);
+}
+
+.sidebar nav a.active {
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.sidebar-footer {
+  padding: 0 0.5rem;
+  font-size: 0.9rem;
+}
+
+.sidebar-footer button {
+  margin-top: 0.5rem;
+  width: 100%;
+}
+
+.content {
+  padding: 2rem 1.5rem;
+  max-width: 900px;
+  width: 100%;
+}
+
+/* Reusable pieces for feature pages */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space);
+  margin-bottom: 1.5rem;
+}
+
+.card-grid .card {
+  margin-bottom: 0;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.badge {
+  display: inline-block;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  background: var(--accent-soft);
+  border-radius: 999px;
+  padding: 0.15rem 0.65rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 0.75rem;
+}
+
+/* Phones: sidebar becomes a top bar */
+@media (max-width: 700px) {
+  .app-shell {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    gap: 0.75rem;
+  }
+
+  .sidebar nav {
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 100%;
+    order: 3;
+  }
+
+  .sidebar-footer {
+    margin-left: auto;
+  }
+
+  .sidebar-footer p {
+    display: none;
+  }
+
+  .sidebar-footer button {
+    margin-top: 0;
+    width: auto;
+  }
+
+  .content {
+    padding: 1.25rem var(--space);
+  }
+}
+
+
+/* ============================================================
+   Search + gym pages
+   ============================================================ */
+
+.filters {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.filters input,
+.filters select {
+  margin-bottom: 0;
+}
+
+.result-count {
+  margin-bottom: 0.75rem;
+}
+
+a.result {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
+a.result:hover {
+  border-color: var(--accent);
+}
+
+.result-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+}
+
+.result-top h3 {
+  margin: 0;
+}
+
+.price {
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.result p {
+  margin: 0.25rem 0 0.75rem;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 1rem;
+  color: var(--text-muted);
+  text-decoration: none;
+}
+
+.back-link:hover {
+  color: var(--text);
+}
+
+.photo-placeholder {
+  display: grid;
+  place-items: center;
+  height: 170px;
+  margin-bottom: var(--space);
+  background: var(--accent-soft);
+  border-radius: var(--radius);
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.pass-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 0.75rem;
+}
+
+.pass-option {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1rem;
+}
+
+.pass-option .stat-value {
+  margin: 0.25rem 0 0.75rem;
+}
+
+.pass-option button {
+  width: 100%;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.hours-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.4rem 0;
+}
+
+.two-col {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--space);
+}
+
+.two-col .card {
+  margin-bottom: 0;
+}
+
+.note {
+  margin-top: 1.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+@media (max-width: 600px) {
+  .filters {
+    grid-template-columns: 1fr;
+  }
+}

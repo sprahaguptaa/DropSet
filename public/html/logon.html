@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Log in | DropSet</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main class="login-page">
+    <div class="login-card">
+      <h1>DropSet</h1>
+      <p class="muted">Log in to find a gym wherever you are.</p>
+
+      <div id="login-form">
+        <label for="email">Email</label>
+        <input id="email" type="email" autocomplete="email" placeholder="you@example.com">
+
+        <label for="password">Password</label>
+        <input id="password" type="password" autocomplete="current-password">
+
+        <p id="login-error" class="form-error" role="alert"></p>
+        <button id="login-btn" type="button">Log in</button>
+      </div>
+    </div>
+  </main>
+
+  <script src="js/auth.js"></script>
+  <script>
+    // Already logged in? Skip straight to the dashboard.
+    if (Auth.currentUser()) window.location.href = 'dashboard.html';
+
+    const emailEl = document.getElementById('email');
+    const passwordEl = document.getElementById('password');
+    const errorEl = document.getElementById('login-error');
+
+    function handleLogin() {
+      const result = Auth.login(emailEl.value.trim(), passwordEl.value);
+      if (result.ok) {
+        window.location.href = 'dashboard.html';
+      } else {
+        errorEl.textContent = result.error;
+      }
+    }
+
+    document.getElementById('login-btn').addEventListener('click', handleLogin);
+    passwordEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') handleLogin();
+    });
+  </script>
+</body>
+</html>
