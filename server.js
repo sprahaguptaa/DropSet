@@ -1,6 +1,6 @@
 require('dotenv').config();
 const express = require('express');
-const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 
@@ -16,7 +16,7 @@ app.use(express.static('public'));
 //////////////////////////////////////
 //ROUTES TO SERVE HTML FILES
 //////////////////////////////////////
-// Default route to serve logon.html
+// Default route to serve login.html
 app.get('/', (req, res) => {
     res.sendFile(__dirname + '/public/login.html');
 });
@@ -31,24 +31,29 @@ app.get('/dashboard', (req, res) => {
 
 
 /////////////////////////////////////////////////
-//HELPER FUNCTIONS AND AUTHENTICATION MIDDLEWARE
+//DATABASE CONNECTION AND AUTHENTICATION MIDDLEWARE
 /////////////////////////////////////////////////
-// Helper function to create a MySQL connection
-async function createConnection() {
-    return await mysql.createConnection({
-        host: process.env.DB_HOST,
-        user: process.env.DB_USER,
-        password: process.env.DB_PASSWORD,
-        database: process.env.DB_NAME,
-    });
-}
+// One shared connection pool to the Supabase Postgres database.
+// Supabase requires SSL, so it is turned on here.
+const pool = new Pool({
+    host: process.env.DB_HOST,
+    port: Number(process.env.DB_PORT) || 5432,
+    user: process.env.DB_USER,
+    password: process.env.DB_PASSWORD,
+    database: process.env.DB_NAME,
+    ssl: { rejectUnauthorized: false },
+});
 
-// **Authorization Middleware: Verify JWT Token and Check User in Database**
+// **Authorization Middleware: Verify JWT and check the user still exists**
+// The front end sends the JWT in the "authorization" header.
 async function authenticateToken(req, res, next) {
-    const token = req.headers['authorization'];
+    let token = req.headers['authorization'];
 
     if (!token) {
         return res.status(401).json({ message: 'Access denied. No token provided.' });
+    }
+    if (token.startsWith('Bearer ')) {
+        token = token.slice(7);  // also accept the "Bearer <jwt>" format
     }
 
     jwt.verify(token, process.env.JWT_SECRET, async (err, decoded) => {
@@ -57,22 +62,18 @@ async function authenticateToken(req, res, next) {
         }
 
         try {
-            const connection = await createConnection();
-
-            // Query the database to verify that the email is associated with an active account
-            const [rows] = await connection.execute(
-                'SELECT email FROM user WHERE email = ?',
+            // Make sure the email in the token still belongs to an account
+            const result = await pool.query(
+                'SELECT email FROM public.app_users WHERE lower(email) = lower($1)',
                 [decoded.email]
             );
 
-            await connection.end();  // Close connection
-
-            if (rows.length === 0) {
+            if (result.rows.length === 0) {
                 return res.status(403).json({ message: 'Account not found or deactivated.' });
             }
 
             req.user = decoded;  // Save the decoded email for use in the route
-            next();  // Proceed to the next middleware or route handler
+            next();  // Proceed to the route handler
         } catch (dbError) {
             console.error(dbError);
             res.status(500).json({ message: 'Database error during authentication.' });
@@ -80,7 +81,7 @@ async function authenticateToken(req, res, next) {
     });
 }
 /////////////////////////////////////////////////
-//END HELPER FUNCTIONS AND AUTHENTICATION MIDDLEWARE
+//END DATABASE CONNECTION AND AUTHENTICATION MIDDLEWARE
 /////////////////////////////////////////////////
 
 
@@ -96,19 +97,17 @@ app.post('/api/create-account', async (req, res) => {
     }
 
     try {
-        const connection = await createConnection();
-        const hashedPassword = await bcrypt.hash(password, 10);  // Hash password
+        // Salt and hash the password (bcrypt adds a random salt, 10 rounds)
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        const [result] = await connection.execute(
-            'INSERT INTO user (email, password) VALUES (?, ?)',
-            [email, hashedPassword]
+        await pool.query(
+            'INSERT INTO public.app_users (email, password_hash) VALUES ($1, $2)',
+            [email.trim().toLowerCase(), hashedPassword]
         );
-
-        await connection.end();  // Close connection
 
         res.status(201).json({ message: 'Account created successfully!' });
     } catch (error) {
-        if (error.code === 'ER_DUP_ENTRY') {
+        if (error.code === '23505') {  // Postgres unique violation
             res.status(409).json({ message: 'An account with this email already exists.' });
         } else {
             console.error(error);
@@ -126,22 +125,18 @@ app.post('/api/login', async (req, res) => {
     }
 
     try {
-        const connection = await createConnection();
-
-        const [rows] = await connection.execute(
-            'SELECT * FROM user WHERE email = ?',
-            [email]
+        const result = await pool.query(
+            'SELECT email, password_hash FROM public.app_users WHERE lower(email) = lower($1)',
+            [email.trim()]
         );
 
-        await connection.end();  // Close connection
-
-        if (rows.length === 0) {
+        if (result.rows.length === 0) {
             return res.status(401).json({ message: 'Invalid email or password.' });
         }
 
-        const user = rows[0];
+        const user = result.rows[0];
 
-        const isPasswordValid = await bcrypt.compare(password, user.password);
+        const isPasswordValid = await bcrypt.compare(password, user.password_hash);
         if (!isPasswordValid) {
             return res.status(401).json({ message: 'Invalid email or password.' });
         }
@@ -159,16 +154,12 @@ app.post('/api/login', async (req, res) => {
     }
 });
 
-// Route: Get All Email Addresses
+// Route: Get All Email Addresses (protected: requires a valid JWT)
 app.get('/api/users', authenticateToken, async (req, res) => {
     try {
-        const connection = await createConnection();
+        const result = await pool.query('SELECT email FROM public.app_users ORDER BY email');
 
-        const [rows] = await connection.execute('SELECT email FROM user');
-
-        await connection.end();  // Close connection
-
-        const emailList = rows.map((row) => row.email);
+        const emailList = result.rows.map((row) => row.email);
         res.status(200).json({ emails: emailList });
     } catch (error) {
         console.error(error);
@@ -178,7 +169,6 @@ app.get('/api/users', authenticateToken, async (req, res) => {
 //////////////////////////////////////
 //END ROUTES TO HANDLE API REQUESTS
 //////////////////////////////////////
-
 
 // Start the server
 app.listen(port, () => {
