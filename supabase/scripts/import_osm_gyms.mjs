@@ -162,7 +162,8 @@ ${rows.join(',\n')}
 on conflict (slug) do nothing;
 ${fills.map((f) => `\n-- Seeded gym found in OSM (${f.key}): fill its location.
 update public.gyms set lat = ${f.lat.toFixed(6)}, lng = ${f.lng.toFixed(6)},
-  address_line1 = coalesce(${q(f.line1)}, address_line1), postal_code = coalesce(${q(f.postcode)}, postal_code)
+  address_line1 = coalesce(${q(f.line1)}, address_line1), postal_code = coalesce(${q(f.postcode)}, postal_code),
+  notes = nullif(trim(replace(notes, 'Street address still needed.', '')), '')
 where slug = ${q(f.slug)} and lat is null;`).join('\n')}
 
 insert into public.gym_training_styles (gym_id, style_id)

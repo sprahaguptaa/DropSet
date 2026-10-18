@@ -194,7 +194,8 @@ on conflict (slug) do nothing;
 
 -- Seeded gym found in OSM (way/96326164): fill its location.
 update public.gyms set lat = 33.652520, lng = -111.933138,
-  address_line1 = coalesce('6850 East Chauncey Lane', address_line1), postal_code = coalesce('85054', postal_code)
+  address_line1 = coalesce('6850 East Chauncey Lane', address_line1), postal_code = coalesce('85054', postal_code),
+  notes = nullif(trim(replace(notes, 'Street address still needed.', '')), '')
 where slug = 'lifetime-north-scottsdale' and lat is null;
 
 insert into public.gym_training_styles (gym_id, style_id)
