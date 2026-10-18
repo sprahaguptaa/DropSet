@@ -1,0 +1,22 @@
+/* Web only. Native ignores this file. */
+html,
+body {
+  background-color: #f5f2ec;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* We draw our own focus ring on inputs (TextField). */
+input,
+textarea {
+  outline: none;
+}
+
+::selection {
+  background: rgba(45, 75, 255, 0.18);
+}
