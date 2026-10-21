@@ -100,9 +100,31 @@ export async function getProfile(userId: string) {
   return data;
 }
 
-export async function updateProfile(userId: string, patch: { display_name?: string; home_city?: string | null }) {
+export async function updateProfile(
+  userId: string,
+  patch: { display_name?: string; home_city?: string | null; avatar_url?: string | null },
+) {
   const { error } = await supabase.from('profiles').update(patch).eq('id', userId);
   fail(error);
+}
+
+// One photo per user at avatars/{id}/avatar.jpg (storage policies only allow writing your own folder).
+const avatarPath = (userId: string) => `${userId}/avatar.jpg`;
+
+export async function uploadAvatar(userId: string, localUri: string) {
+  const body = await fetch(localUri).then((r) => r.arrayBuffer());
+  const { error } = await supabase.storage
+    .from('avatars')
+    .upload(avatarPath(userId), body, { contentType: 'image/jpeg', upsert: true });
+  fail(error);
+  const { publicUrl } = supabase.storage.from('avatars').getPublicUrl(avatarPath(userId)).data;
+  await updateProfile(userId, { avatar_url: `${publicUrl}?v=${Date.now()}` }); // new URL so caches show the new photo
+}
+
+export async function removeAvatar(userId: string) {
+  const { error } = await supabase.storage.from('avatars').remove([avatarPath(userId)]);
+  fail(error);
+  await updateProfile(userId, { avatar_url: null });
 }
 
 export async function getSavedGymIds(): Promise<string[]> {

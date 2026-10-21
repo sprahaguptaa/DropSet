@@ -46,6 +46,12 @@
         {
           "locationWhenInUsePermission": "DropSet uses your location to show gyms near you."
         }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "DropSet uses your photos so you can set a profile picture."
+        }
       ]
     ],
     "experiments": {
