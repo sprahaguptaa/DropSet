@@ -9,7 +9,6 @@ Stack: Expo SDK 58, Expo Router (file-based routes in `src/app`), TypeScript, Su
 ```bash
 cd mobile
 npm install
-cp .env.example .env.local      # Supabase URL + publishable key (safe to ship)
 npx expo start
 ```
 
@@ -54,18 +53,21 @@ src/providers/           AuthProvider (session + profile), SavedProvider (hearts
 
 ## Supabase dashboard setup (one time, project owner)
 
-1. **Authentication → URL Configuration → Redirect URLs:** add `http://localhost:8081/**`, `exp://**`, `dropset://**`, and the Render URL once deployed (`https://<app>.onrender.com/**`). Password-reset and Google links only return to these.
+1. **Authentication → URL Configuration → Redirect URLs:** add `http://localhost:8081/**`, `exp://**`, `dropset://**`, and the live Vercel URL (`https://<app>.vercel.app/**`). Set **Site URL** to the Vercel URL too. Password-reset and Google links only return to these.
 2. **Authentication → Sign In / Providers → Email:** for the class demo, turn **Confirm email** off. The built-in mailer only sends a few emails per hour. Leave it on if you set up custom SMTP (for example Resend's free tier).
 3. **Google sign-in (optional):** enable the Google provider with a Google Cloud OAuth client, then set `EXPO_PUBLIC_GOOGLE_AUTH=1`. Apple sign-in needs a paid Apple developer account, so it's left out.
 
-## Deploy the web version (Render, free)
+## Deploy the web version (Vercel, free)
 
-New **Static Site** from this repo:
+The live site is a Vercel project owned by Sage. `vercel.json` holds the build settings: it exports the web build, and every path rewrites to `index.html`, so links like `/gym/phoenix-rock-gym` work.
 
-- Build command: `cd mobile && npm ci && npx expo export -p web`
-- Publish directory: `mobile/dist`
-- Environment: `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`
-- Redirects/Rewrites: `/*` → `/index.html` (Rewrite), so deep links like `/gym/phoenix-rock-gym` work.
+To publish the current code, from `mobile/` (first time on a machine: `npx vercel login`):
+
+```bash
+npm run deploy
+```
+
+No environment variables are needed; the app already points at the team's Supabase project.
 
 ## What's next (by build-plan feature)
 
