@@ -8,14 +8,14 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { useFonts } from 'expo-font';
 import * as Linking from 'expo-linking';
-import { DefaultTheme, router, Stack, ThemeProvider } from 'expo-router';
+import { DefaultTheme, router, Stack, ThemeProvider, useRootNavigationState } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import '@/theme/global.css';
-import { sessionFromUrl } from '@/lib/auth-links';
+import { emailLinkError, sessionFromUrl } from '@/lib/auth-links';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { SavedProvider } from '@/providers/SavedProvider';
 import { color } from '@/theme/tokens';
@@ -27,15 +27,33 @@ const theme = {
   colors: { ...DefaultTheme.colors, background: color.canvas, primary: color.ember, text: color.ink, card: color.card, border: color.line },
 };
 
-// Native: password-reset and Google links come back as deep links carrying the session.
+// Email and Google links come back carrying either a session or an error (expired / already used link).
+// Native gets them as deep links; web reads them from the page URL once the navigator is ready.
 function AuthDeepLinks() {
   const url = Linking.useLinkingURL();
+  const navReady = !!useRootNavigationState()?.key;
+
   useEffect(() => {
-    if (Platform.OS === 'web' || !url || !/access_token|code=/.test(url)) return;
+    if (Platform.OS === 'web' || !url || !navReady) return;
+    const notice = emailLinkError(url);
+    if (notice) {
+      router.replace({ pathname: '/login', params: { notice } });
+      return;
+    }
+    if (!/access_token|code=/.test(url)) return;
     sessionFromUrl(url)
       .then((r) => r?.type === 'recovery' && router.replace('/reset-password'))
       .catch(() => {});
-  }, [url]);
+  }, [url, navReady]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || !navReady) return;
+    const notice = emailLinkError(window.location.href);
+    if (!notice) return;
+    window.history.replaceState(null, '', window.location.pathname); // drop the #error=… from the address bar
+    router.replace({ pathname: '/login', params: { notice } });
+  }, [navReady]);
+
   return null;
 }
 
