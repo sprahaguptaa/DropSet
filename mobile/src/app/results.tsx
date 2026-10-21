@@ -163,7 +163,7 @@ export default function Results() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.canvas },
   flex: { flex: 1 },
-  list: { gap: space.m, paddingHorizontal: layout.gutter, width: '100%', maxWidth: 760, alignSelf: 'center' },
+  list: { gap: space.m, paddingHorizontal: layout.gutter, width: '100%', maxWidth: layout.list, alignSelf: 'center' },
   listWide: { maxWidth: undefined, paddingHorizontal: 0 },
   listHead: { gap: 4, paddingBottom: space.s },
   credit: { textAlign: 'center', paddingVertical: space.xxl },

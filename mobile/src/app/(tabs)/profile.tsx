@@ -11,7 +11,7 @@ import { T } from '@/components/Text';
 import { TextField } from '@/components/TextField';
 import { updateProfile } from '@/lib/api';
 import { firstName, useAuth } from '@/providers/AuthProvider';
-import { color, radius, shadow, space } from '@/theme/tokens';
+import { color, layout, radius, shadow, space } from '@/theme/tokens';
 
 function About() {
   return (
@@ -68,7 +68,7 @@ export default function Profile() {
   if (!session) {
     return (
       <View style={styles.root}>
-        <TabTitle title="Profile" />
+        <TabTitle title="Profile" width={layout.form} />
         <EmptyState
           icon={SignIn}
           title="Make it yours"
@@ -83,8 +83,8 @@ export default function Profile() {
 
   return (
     <View style={styles.root}>
-      <TabTitle title="Profile" />
-      <ScrollScreen contentContainerStyle={styles.content}>
+      <TabTitle title="Profile" width={layout.form} />
+      <ScrollScreen width={layout.form} gap={space.xxl}>
         <View style={[styles.identity, shadow.card]}>
           <View style={styles.avatar}>
             <T v="title2" c="onDark">
@@ -111,7 +111,6 @@ export default function Profile() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.canvas },
   flex: { flex: 1 },
-  content: { gap: space.xxl, maxWidth: 560 },
   identity: { flexDirection: 'row', alignItems: 'center', gap: space.l, padding: space.l, borderRadius: radius.l, backgroundColor: color.card },
   avatar: { width: 56, height: 56, borderRadius: radius.pill, backgroundColor: color.ink, alignItems: 'center', justifyContent: 'center' },
   form: { gap: space.l },

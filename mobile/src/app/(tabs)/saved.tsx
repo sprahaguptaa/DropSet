@@ -30,7 +30,7 @@ export default function Saved() {
 
   return (
     <TabBody>
-      <TabTitle title="Saved" subtitle={session ? 'Gyms you want to try on your next trip.' : undefined} />
+      <TabTitle width={layout.list} title="Saved" subtitle={session ? 'Gyms you want to try on your next trip.' : undefined} />
       {!session ? (
         <EmptyState
           icon={SignIn}
@@ -67,5 +67,5 @@ export default function Saved() {
 }
 
 const styles = StyleSheet.create({
-  list: { gap: space.m, paddingHorizontal: layout.gutter, width: '100%', maxWidth: 760, alignSelf: 'center' },
+  list: { gap: space.m, paddingHorizontal: layout.gutter, width: '100%', maxWidth: layout.list, alignSelf: 'center' },
 });

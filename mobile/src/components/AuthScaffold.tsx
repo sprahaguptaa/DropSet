@@ -1,18 +1,20 @@
 import type { ReactNode } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
-import { color, radius, shadow, space } from '@/theme/tokens';
+import { color, layout, radius, shadow, space } from '@/theme/tokens';
 
 import { ScreenHeader, ScrollScreen, useWide } from './layout';
 import { Mark } from './Logo';
 import { T } from './Text';
+
+const CARD = 460; // sign-in card width on wide screens; the header lines up with it
 
 // Shared frame for log in / sign up / password screens. A centered card on wide web.
 export function AuthScaffold({ title, subtitle, children }: { title: string; subtitle: string; children: ReactNode }) {
   const wide = useWide();
   return (
     <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScreenHeader onBack={undefined} />
+      <ScreenHeader width={wide ? CARD + layout.gutter * 2 : undefined} />
       <ScrollScreen contentContainerStyle={wide && styles.wideContent}>
         <View style={[styles.body, wide && [styles.card, shadow.card]]}>
           <Mark size={40} />
@@ -42,6 +44,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1, backgroundColor: color.canvas },
   wideContent: { paddingTop: space.xxl },
   body: { gap: space.xxl, paddingTop: space.s },
-  card: { width: 460, alignSelf: 'center', backgroundColor: color.card, borderRadius: 28, padding: space.xxxl + 4 },
+  card: { width: CARD, alignSelf: 'center', backgroundColor: color.card, borderRadius: 28, padding: space.xxxl + 4 },
   titles: { gap: space.s },
 });
