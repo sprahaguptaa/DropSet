@@ -56,7 +56,10 @@ export function greeting(date = new Date()) {
 }
 
 export function shortDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  // A plain date ("2026-10-14") is a calendar day, not UTC midnight, or Arizona would show the 13th.
+  const day = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+  const date = day ? new Date(Number(day[1]), Number(day[2]) - 1, Number(day[3])) : new Date(iso);
+  return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 export function timeLeft(iso: string) {
