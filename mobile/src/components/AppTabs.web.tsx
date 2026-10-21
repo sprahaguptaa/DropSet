@@ -55,15 +55,20 @@ export default function AppTabs() {
 
   return (
     <Tabs style={styles.root}>
+      {/* Registers the routes. expo-router only reads a TabList that is a direct child of <Tabs>,
+          so the visible nav (header on desktop, bottom bar on phones) lives outside it and reuses these names. */}
+      <TabList style={styles.hidden}>
+        {TABS.map((t) => (
+          <TabTrigger key={t.name} name={t.name} href={t.href} />
+        ))}
+      </TabList>
       {wide && (
         <View style={styles.topBar}>
           <Column style={styles.topRow}>
             <Pressable onPress={() => router.navigate('/explore')} accessibilityRole="link" accessibilityLabel="DropSet home">
               <Logo size={28} />
             </Pressable>
-            <TabList asChild>
-              <View style={styles.topNav}>{triggers}</View>
-            </TabList>
+            <View style={styles.topNav}>{triggers}</View>
             <View style={styles.topRight}>
               {!session && <Button label="Log in" variant="dark" size="s" onPress={() => router.push('/login')} />}
             </View>
@@ -71,11 +76,7 @@ export default function AppTabs() {
         </View>
       )}
       <TabSlot style={styles.slot} />
-      {!wide && (
-        <TabList asChild>
-          <View style={StyleSheet.flatten([styles.bottomBar, { paddingBottom: Math.max(insets.bottom, space.s) }])}>{triggers}</View>
-        </TabList>
-      )}
+      {!wide && <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, space.s) }]}>{triggers}</View>}
     </Tabs>
   );
 }
@@ -83,6 +84,7 @@ export default function AppTabs() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.canvas },
   slot: { flex: 1 },
+  hidden: { display: 'none' },
   topBar: { backgroundColor: color.canvas, borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: color.line },
   topRow: { height: 68, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', maxWidth: layout.maxWidth },
   topNav: { flexDirection: 'row', gap: space.xxl, height: '100%' },

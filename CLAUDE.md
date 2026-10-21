@@ -20,7 +20,7 @@ server.js (Express): Sprint 1 template login today; Stripe checkout + webhook ->
 
 ## Where to look
 
-- `mobile/README.md`: run on phone/web, folder map, design rules, Supabase dashboard setup, Render deploy.
+- `mobile/README.md`: run on phone/web, folder map, design rules, Supabase dashboard setup, Vercel deploy.
 - `mobile/src/lib/api.ts`: every query the app makes.
 - `mobile/src/theme/tokens.ts`: the design system. Don't add colors outside it.
 - Database (on the `DataBase` branch): `DATABASE.md`, `supabase/migrations/*`, `supabase/seed.sql`, `supabase/seed_osm_gyms.sql`.
