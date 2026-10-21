@@ -2,6 +2,8 @@
 
 The DropSet traveler app for iOS, Android and the web from one codebase: find a gym near where you landed, filter by how you train, see the real price, and buy a day, week or month pass.
 
+**Live:** https://dropset-app.vercel.app
+
 Stack: Expo SDK 58, Expo Router (file-based routes in `src/app`), TypeScript, Supabase (Postgres + Auth), Reanimated.
 
 ## Run it
@@ -59,7 +61,7 @@ src/providers/           AuthProvider (session + profile), SavedProvider (hearts
 
 ## Deploy the web version (Vercel, free)
 
-The live site is a Vercel project owned by Sage. `vercel.json` holds the build settings: it exports the web build, and every path rewrites to `index.html`, so links like `/gym/phoenix-rock-gym` work.
+The live site (https://dropset-app.vercel.app) is the Vercel project `dropset`, owned by Sage. `vercel.json` holds the build settings: it exports the web build, and every path rewrites to `index.html`, so links like `/gym/phoenix-rock-gym` work.
 
 To publish the current code, from `mobile/` (first time on a machine: `npx vercel login`):
 

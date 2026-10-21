@@ -2,6 +2,8 @@
 
 DropSet is a CIS 440 capstone: a day-pass gym app for travelers. Phoenix, Tempe and Scottsdale first.
 
+Live web app: https://dropset-app.vercel.app (deploy with `npm run deploy` in `mobile/`).
+
 ## Architecture
 
 ```
