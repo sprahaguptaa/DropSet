@@ -66,7 +66,10 @@ export const shadow = {
 } as const;
 
 export const layout = {
-  maxWidth: 1120, // web content column
+  maxWidth: 1120, // web page column (nav bar, explore, results, gym page)
+  list: 760, // single-column lists: saved, passes, search
+  form: 600, // forms and summaries: profile, checkout
+  ticket: 480, // the QR pass
   wide: 900, // breakpoint where the web layout goes two-column
   gutter: 20,
 } as const;

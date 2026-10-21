@@ -9,7 +9,7 @@ import { T } from '@/components/Text';
 import { getPassOption } from '@/lib/api';
 import { money, passLength } from '@/lib/format';
 import { useAuth } from '@/providers/AuthProvider';
-import { color, radius, shadow, space } from '@/theme/tokens';
+import { color, layout, radius, shadow, space } from '@/theme/tokens';
 
 type Option = NonNullable<Awaited<ReturnType<typeof getPassOption>>>;
 
@@ -35,13 +35,13 @@ export default function Checkout() {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Checkout" />
+      <ScreenHeader title="Checkout" width={layout.form} />
       {option === undefined ? (
         <ActivityIndicator color={color.ink} style={{ marginTop: space.huge }} />
       ) : option === null ? (
         <EmptyState icon={WarningCircle} title="Pass not available" body="This pass option was removed. Pick another one." action="Go back" onAction={() => back()} />
       ) : (
-        <ScrollScreen contentContainerStyle={styles.content}>
+        <ScrollScreen width={layout.form} gap={space.xxl}>
           <View style={[styles.summary, shadow.card]}>
             <T v="overline" c="muted">
               {option.gyms?.city}
@@ -100,7 +100,6 @@ export default function Checkout() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.canvas },
   flex: { flex: 1 },
-  content: { gap: space.xxl, maxWidth: 560 },
   summary: { backgroundColor: color.card, borderRadius: radius.xl, padding: space.xxl, gap: space.m },
   rule: { height: StyleSheet.hairlineWidth, backgroundColor: color.line },
   line: { flexDirection: 'row', alignItems: 'center', gap: space.l },

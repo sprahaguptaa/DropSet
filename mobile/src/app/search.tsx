@@ -11,7 +11,7 @@ import { Press } from '@/components/Press';
 import { T } from '@/components/Text';
 import { currentPosition } from '@/lib/location';
 import { findPlaces, type Place } from '@/lib/places';
-import { color, font, radius, shadow, space } from '@/theme/tokens';
+import { color, font, layout, radius, shadow, space } from '@/theme/tokens';
 
 type Where = { label: string; lat: number; lng: number };
 
@@ -57,8 +57,8 @@ export default function Search() {
 
   return (
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScreenHeader title="Search" close />
-      <ScrollScreen contentContainerStyle={styles.content}>
+      <ScreenHeader title="Search" close width={layout.list} />
+      <ScrollScreen width={layout.list} gap={space.xxxl} contentContainerStyle={styles.content}>
         <View style={styles.block}>
           <T v="overline" c="muted">
             Where
@@ -131,7 +131,7 @@ export default function Search() {
       </ScrollScreen>
 
       <View style={[styles.bar, { paddingBottom: insets.bottom + space.m }]}>
-        <Column style={styles.barRow}>
+        <Column width={layout.list} style={styles.barRow}>
           <Press onPress={() => setFilters(NO_FILTERS)} haptic={false} accessibilityRole="button">
             <T v="callout" style={{ fontFamily: font.bold, textDecorationLine: 'underline' }}>
               Clear filters
@@ -147,7 +147,7 @@ export default function Search() {
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.canvas },
   flex: { flex: 1 },
-  content: { gap: space.xxxl, paddingTop: space.s },
+  content: { paddingTop: space.s },
   block: { gap: space.m },
   input: {
     height: 56,

@@ -8,12 +8,12 @@ import { Column, useWide } from './layout';
 import { T } from './Text';
 
 // Big left-aligned title for the top of a tab (Saved, Passes, Profile).
-export function TabTitle({ title, subtitle }: { title: string; subtitle?: string }) {
+export function TabTitle({ title, subtitle, width }: { title: string; subtitle?: string; width?: number }) {
   const insets = useSafeAreaInsets();
   const wide = useWide();
   return (
     <View style={[styles.wrap, { paddingTop: wide ? space.xxxl : insets.top + space.l }]}>
-      <Column style={styles.inner}>
+      <Column width={width} style={styles.inner}>
         <T v="title1" style={wide && styles.wide}>
           {title}
         </T>

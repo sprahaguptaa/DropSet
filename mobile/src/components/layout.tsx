@@ -15,12 +15,20 @@ export function useWide() {
   return useWindowDimensions().width >= layout.wide;
 }
 
-// Centers content in a readable column on wide web screens.
-export function Column({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
-  return <View style={[styles.column, style]}>{children}</View>;
+// Centers content in a readable column on wide web screens. `width` includes the side gutters,
+// so a page's title, header and content line up when they share the same width (see layout in tokens.ts).
+export function Column({ children, style, width = layout.maxWidth }: { children: ReactNode; style?: StyleProp<ViewStyle>; width?: number }) {
+  return <View style={[styles.column, { maxWidth: width }, style]}>{children}</View>;
 }
 
-export function ScrollScreen({ children, contentContainerStyle, ...rest }: ScrollViewProps & { children: ReactNode }) {
+// `gap` spaces the page's sections; contentContainerStyle is only for outer padding.
+export function ScrollScreen({
+  children,
+  contentContainerStyle,
+  width,
+  gap,
+  ...rest
+}: ScrollViewProps & { children: ReactNode; width?: number; gap?: number }) {
   return (
     <ScrollView
       {...rest}
@@ -28,7 +36,9 @@ export function ScrollScreen({ children, contentContainerStyle, ...rest }: Scrol
       contentContainerStyle={[styles.scrollContent, contentContainerStyle]}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}>
-      <Column>{children}</Column>
+      <Column width={width} style={gap != null && { gap }}>
+        {children}
+      </Column>
     </ScrollView>
   );
 }
@@ -73,17 +83,19 @@ export function ScreenHeader({
   right,
   close,
   onBack,
+  width,
 }: {
   title?: string;
   subtitle?: string;
   right?: ReactNode;
   close?: boolean;
   onBack?: () => void;
+  width?: number;
 }) {
   const insets = useSafeAreaInsets();
   return (
     <View style={[styles.header, { paddingTop: insets.top + space.s }]}>
-      <Column style={styles.headerRow}>
+      <Column width={width} style={styles.headerRow}>
         <IconButton icon={close ? X : CaretLeft} label={close ? 'Close' : 'Back'} onPress={onBack ?? (() => back())} />
         <View style={styles.headerText}>
           {title ? (
@@ -155,7 +167,7 @@ export const webOnly = (style: ViewStyle) => (Platform.OS === 'web' ? style : un
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: color.canvas },
   scrollContent: { paddingBottom: 120 },
-  column: { width: '100%', maxWidth: layout.maxWidth, alignSelf: 'center', paddingHorizontal: layout.gutter },
+  column: { width: '100%', alignSelf: 'center', paddingHorizontal: layout.gutter },
   iconButton: {
     width: 40,
     height: 40,

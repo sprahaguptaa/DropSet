@@ -57,7 +57,7 @@ export default function Passes() {
 
   return (
     <TabBody>
-      <TabTitle title="Passes" subtitle={session ? 'Show the QR code at the front desk.' : undefined} />
+      <TabTitle width={layout.list} title="Passes" subtitle={session ? 'Show the QR code at the front desk.' : undefined} />
       {!session ? (
         <EmptyState
           icon={SignIn}
@@ -92,7 +92,7 @@ export default function Passes() {
 
 const styles = StyleSheet.create({
   flex: { flex: 1, gap: 2 },
-  list: { gap: space.m, paddingHorizontal: layout.gutter, width: '100%', maxWidth: 760, alignSelf: 'center' },
+  list: { gap: space.m, paddingHorizontal: layout.gutter, width: '100%', maxWidth: layout.list, alignSelf: 'center' },
   pass: { flexDirection: 'row', alignItems: 'center', gap: space.l, padding: space.l, borderRadius: radius.l, backgroundColor: color.card },
   passActive: { borderWidth: 1.5, borderColor: color.mint },
   stub: { width: 48, height: 48, borderRadius: radius.m, backgroundColor: color.sunken, alignItems: 'center', justifyContent: 'center' },

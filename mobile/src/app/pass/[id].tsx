@@ -10,7 +10,7 @@ import { back, EmptyState, ScreenHeader, ScrollScreen } from '@/components/layou
 import { T } from '@/components/Text';
 import { activatePass, getPass, type PassWithGym } from '@/lib/api';
 import { passLength, shortDate, timeLeft } from '@/lib/format';
-import { color, font, radius, shadow, space } from '@/theme/tokens';
+import { color, font, layout, radius, shadow, space } from '@/theme/tokens';
 
 export default function PassScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -41,11 +41,11 @@ export default function PassScreen() {
 
   return (
     <View style={styles.root}>
-      <ScreenHeader title="Your pass" />
+      <ScreenHeader title="Your pass" width={layout.ticket} />
       {pass === null ? (
         <EmptyState icon={WarningCircle} title="Pass not found" body="It may belong to another account." action="Go back" onAction={() => back()} />
       ) : (
-        <ScrollScreen contentContainerStyle={styles.content}>
+        <ScrollScreen width={layout.ticket} gap={space.xxl} contentContainerStyle={styles.content}>
           <View style={[styles.ticket, shadow.float, pass.status === 'active' && styles.ticketActive]}>
             <View style={styles.ticketHead}>
               <T v="overline" c="onDarkMuted">
@@ -99,7 +99,7 @@ export default function PassScreen() {
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: color.canvas },
-  content: { gap: space.xxl, maxWidth: 460, paddingTop: space.s },
+  content: { paddingTop: space.s },
   ticket: { borderRadius: radius.xl, backgroundColor: color.card, overflow: 'hidden' },
   ticketActive: { borderWidth: 2, borderColor: color.mint },
   ticketHead: { backgroundColor: color.ink, padding: space.xxl, gap: 4 },
