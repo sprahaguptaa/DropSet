@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { Avatar } from '@/components/Avatar';
 import { Press } from '@/components/Press';
 import { PriceTag } from '@/components/PriceTag';
 import { ScrollScreen, Section, useWide } from '@/components/layout';
@@ -70,10 +71,8 @@ export default function Explore() {
           {name ? `, ${name}` : ''}
         </T>
         {auth.session ? (
-          <Press onPress={() => router.navigate('/profile')} style={styles.avatar} accessibilityLabel="Profile">
-            <T v="headline" c="onDark">
-              {(name[0] ?? 'D').toUpperCase()}
-            </T>
+          <Press onPress={() => router.navigate('/profile')} accessibilityLabel="Profile">
+            <Avatar url={auth.profile?.avatar_url} name={name} size={40} />
           </Press>
         ) : Platform.OS !== 'web' || !wide ? (
           <Press onPress={() => router.push('/login')} haptic={false} accessibilityRole="link">
@@ -202,7 +201,6 @@ export default function Explore() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   greetRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 40 },
-  avatar: { width: 40, height: 40, borderRadius: radius.pill, backgroundColor: color.ink, alignItems: 'center', justifyContent: 'center' },
   title: { marginTop: space.s, fontSize: 36, lineHeight: 38, letterSpacing: -1.2 },
   titleWide: { fontSize: 56, lineHeight: 56, letterSpacing: -2 },
   searchRow: { flexDirection: 'row', gap: space.m, marginTop: space.xl },

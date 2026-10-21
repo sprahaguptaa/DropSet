@@ -27,7 +27,7 @@ free promotion for that gym and fresh, verified data for travelers.
 | Data | 210 Phoenix-area gyms (25 researched + 185 OpenStreetMap), coordinates, styles, 19 priced pass options |
 | Search | City / airport / campus / near me, style + price filters, 30-mile radius, nearest first |
 | Gym page | Pass options with verified/estimated price labels, hours, amenities, save |
-| Accounts | Supabase Auth (email), profile name + home city, saved gyms |
+| Accounts | Supabase Auth (email), profile name + home city + photo, saved gyms |
 | Passes | Passes list, QR + Activate (`activate_pass`), checkout summary (Pay disabled) |
 | Platform | Expo app (web + Expo Go), deployed on Vercel, no `.env` needed, Supabase email links go to the live site |
 
@@ -48,11 +48,12 @@ free promotion for that gym and fresh, verified data for travelers.
 
 Status: ⬜ not started · 🟨 in progress · ✅ done
 
-### Phase 0: Quick wins ⬜
+### Phase 0: Quick wins ✅ (2026-10-21)
 - **Vercel Web Analytics**: add the web-only analytics component; Sage clicks *Enable* under Analytics in the Vercel dashboard once.
 - **Profile photo**: Supabase Storage bucket `avatars` (public read, a user can only write `avatars/{their id}/…`), upload from Profile with `expo-image-picker`, store the URL in `profiles.avatar_url` (column already exists), show it everywhere the initial circle appears today.
 - **Security fix**: revoke `EXECUTE` on `public.handle_new_user()` from `anon` / `authenticated` (it's a trigger function and shouldn't be callable through the API).
 - **Done when**: page views show in Vercel Analytics; a user can set and change their photo on web and phone; the Supabase security advisor no longer flags `handle_new_user`.
+- **Shipped**: `supabase/migrations/20261014000006_avatars_and_security.sql`, `Avatar`, `photo-picker.ts`, `WebAnalytics(.web).tsx`. Analytics also needs *Enable* clicked once in the Vercel dashboard.
 
 ### Phase 1: National gym data ⬜
 - Generalize `supabase/scripts/import_osm_gyms.mjs` to take a list of metros; import ~15 big travel metros: Las Vegas, Los Angeles, San Diego, San Francisco, New York City, Miami, Orlando, Chicago, Austin, Denver, Seattle, Nashville, Atlanta, Boston, Dallas (adjust as needed).

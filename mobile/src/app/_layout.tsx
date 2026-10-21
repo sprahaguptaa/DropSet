@@ -15,6 +15,7 @@ import { useEffect } from 'react';
 import { Platform } from 'react-native';
 
 import '@/theme/global.css';
+import WebAnalytics from '@/components/WebAnalytics';
 import { emailLinkError, sessionFromUrl } from '@/lib/auth-links';
 import { AuthProvider } from '@/providers/AuthProvider';
 import { SavedProvider } from '@/providers/SavedProvider';
@@ -79,6 +80,7 @@ export default function RootLayout() {
       <AuthProvider>
         <SavedProvider>
           <AuthDeepLinks />
+          <WebAnalytics />
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: color.canvas } }}>
             <Stack.Screen name="index" options={{ contentStyle: { backgroundColor: color.ink }, animation: 'fade' }} />
             <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
