@@ -31,6 +31,21 @@ export async function sessionFromUrl(url: string) {
   return { type: params.get('type') };
 }
 
+// An email link that failed (expired, already used, or opened by an inbox link-scanner first)
+// comes back as #error=…&error_code=…. Returns a short code for the log-in screen's notice, or null.
+export function emailLinkError(url: string): LinkNotice | null {
+  const query = url.includes('#') ? url.split('#')[1] : (url.split('?')[1] ?? '');
+  const params = new URLSearchParams(query);
+  if (!params.get('error_code') && !params.get('error')) return null;
+  return params.get('error_code') === 'otp_expired' ? 'link-expired' : 'link-failed';
+}
+
+export type LinkNotice = 'link-expired' | 'link-failed';
+export const LINK_NOTICES: Record<LinkNotice, string> = {
+  'link-expired': 'That email link has expired or was already used. Log in below, or use Forgot password to get a fresh link.',
+  'link-failed': 'That email link didn’t work. Log in below, or use Forgot password to get a fresh link.',
+};
+
 export const googleEnabled = process.env.EXPO_PUBLIC_GOOGLE_AUTH === '1';
 
 export async function signInWithGoogle() {

@@ -8,14 +8,14 @@ import { Button } from '@/components/Button';
 import { Press } from '@/components/Press';
 import { T } from '@/components/Text';
 import { TextField } from '@/components/TextField';
-import { friendlyAuthError, googleEnabled, signInWithGoogle } from '@/lib/auth-links';
+import { friendlyAuthError, googleEnabled, LINK_NOTICES, signInWithGoogle, type LinkNotice } from '@/lib/auth-links';
 import { supabase } from '@/lib/supabase';
 import { color, font } from '@/theme/tokens';
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function Login() {
-  const { next } = useLocalSearchParams<{ next?: string }>();
+  const { next, notice } = useLocalSearchParams<{ next?: string; notice?: string }>();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errors, setErrors] = useState<{ email?: string; password?: string; form?: string }>({});
@@ -39,6 +39,13 @@ export default function Login() {
   return (
     <AuthScaffold title="Welcome back" subtitle="Log in to see your passes and saved gyms.">
       <View style={authStyles.form}>
+        {notice && notice in LINK_NOTICES && (
+          <View style={[authStyles.banner, { backgroundColor: color.sunken }]}>
+            <T v="callout" c="ink2">
+              {LINK_NOTICES[notice as LinkNotice]}
+            </T>
+          </View>
+        )}
         <TextField
           label="Email"
           icon={EnvelopeSimple}
