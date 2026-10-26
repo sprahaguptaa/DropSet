@@ -253,22 +253,23 @@ export type Review = {
   id: string;
   rating: number;
   body: string;
-  is_sample: boolean; // placeholder: labeled in the UI, never counted in the rating
+  is_sample: boolean; // placeholder: no author, always labeled "Sample" in the UI
   created_at: string;
   author_name: string | null;
   author_avatar: string | null;
   is_mine: boolean;
 };
 
-export type ReviewSummary = { average: number | null; count: number };
+export type ReviewSummary = { average: number | null; count: number; samples: number };
 
+// The rating is the average of the reviews on the page, samples included (the UI says how many are samples).
+// Samples drop out on their own once a gym has 3 member reviews.
 export async function getReviews(gymId: string): Promise<{ reviews: Review[]; summary: ReviewSummary }> {
   const { data, error } = await supabase.rpc('gym_reviews_for', { p_gym_id: gymId });
   fail(error);
   const reviews = (data ?? []) as Review[];
-  const real = reviews.filter((r) => !r.is_sample);
-  const average = real.length ? real.reduce((sum, r) => sum + r.rating, 0) / real.length : null;
-  return { reviews, summary: { average, count: real.length } };
+  const average = reviews.length ? reviews.reduce((sum, r) => sum + r.rating, 0) / reviews.length : null;
+  return { reviews, summary: { average, count: reviews.length, samples: reviews.filter((r) => r.is_sample).length } };
 }
 
 // One review per person per gym: posting again replaces your earlier review.

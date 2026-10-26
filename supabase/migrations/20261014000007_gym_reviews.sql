@@ -1,6 +1,6 @@
 -- DropSet | Migration 7: gym reviews with a 1-5 dumbbell rating.
 -- One review per person per gym, 40 words max. Placeholder reviews (is_sample) have no author,
--- are always labeled "Sample review" in the app, never count toward a gym's rating, and stop
+-- are always labeled "Sample review" in the app (the rating says how many are samples), and stop
 -- showing once that gym has 3 real reviews. Remove them all with:
 --   delete from public.gym_reviews where is_sample;
 
