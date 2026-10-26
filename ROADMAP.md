@@ -16,7 +16,7 @@ free promotion for that gym and fresh, verified data for travelers.
 2. **Single-player first, social second.** A feature must be worth using with zero followers before it gets a social layer. An empty feed kills apps.
 3. **Safety by design.** Never expose where someone is unless they chose to. Block and report exist before anyone can see anyone else's activity (Apple requires it for user content).
 4. **Positive accountability.** Streaks, "5 days strong", nudges from friends. Never broadcast that someone skipped.
-5. **No fake data.** No invented ratings, prices, or activity. Unknown is shown as unknown.
+5. **No fake data.** No invented ratings, prices, or activity. Unknown is shown as unknown. Demo placeholders are always labeled and never counted (see Reviews under Decisions).
 6. **No redundant features.** If two buttons mean almost the same thing, ship one.
 7. **Lean code.** Everything goes through `mobile/src/lib/api.ts`, design tokens only, `tsc` + `expo lint` clean, schema changes as a new numbered migration.
 
@@ -26,7 +26,7 @@ free promotion for that gym and fresh, verified data for travelers.
 |---|---|
 | Data | 210 Phoenix-area gyms (25 researched + 185 OpenStreetMap), coordinates, styles, 19 priced pass options |
 | Search | City / airport / campus / near me, style + price filters, 30-mile radius, nearest first |
-| Gym page | Pass options with verified/estimated price labels, hours, amenities, save |
+| Gym page | Pass options with verified/estimated price labels, hours, amenities, save, 1-5 dumbbell reviews + Google Maps reviews link |
 | Accounts | Supabase Auth (email), profile name + home city + photo, saved gyms |
 | Passes | Passes list, QR + Activate (`activate_pass`), checkout summary (Pay disabled) |
 | Platform | Expo app (web + Expo Go), deployed on Vercel, no `.env` needed, Supabase email links go to the live site |
@@ -42,6 +42,7 @@ free promotion for that gym and fresh, verified data for travelers.
 | Payments | Stripe test mode, **later** (Phase 8) | Where the server code lives (Vercel functions vs Express `server.js`) is still open. |
 | How we make money | **Decide later** (Phase 9) | Options on the table: sponsored gym placement (always labeled "Sponsored", never changes nearest-first order), revenue share on day passes and gym memberships sold through the app, traveler service fee. `purchases.platform_fee_cents` already exists. |
 | Notifications | In-app first | Push notifications need a development build (not Expo Go). Revisit after Phase 4. |
+| Reviews | **1-5 dumbbells**, 40 words max, any signed-in user, one per gym | Pulled forward from Phase 4 for the demo. Each gym has 3 **sample** reviews: no author, badged "Sample review", left out of the rating, hidden once the gym has 3 real reviews. Remove them with `delete from gym_reviews where is_sample;`. Google's terms don't allow storing their reviews, so every gym links out to Google Maps. Report writes to `review_reports`. |
 | Hosting | Vercel project `dropset` (Sage's account) | `npm run deploy` in `mobile/`. Auto-deploy needs the repo owner to approve Vercel's GitHub access. |
 
 ## Phases

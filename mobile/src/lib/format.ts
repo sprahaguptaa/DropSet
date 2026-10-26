@@ -70,3 +70,8 @@ export function timeLeft(iso: string) {
   if (h >= 1) return `${h}h ${Math.floor((ms % 3.6e6) / 6e4)}m left`;
   return `${Math.max(1, Math.floor(ms / 6e4))} min left`;
 }
+
+export function wordCount(text: string) {
+  const t = text.trim();
+  return t ? t.split(/\s+/).length : 0;
+}

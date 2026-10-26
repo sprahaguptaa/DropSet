@@ -48,6 +48,15 @@ export type Database = {
           { foreignKeyName: 'gym_photos_gym_id_fkey'; columns: ['gym_id']; isOneToOne: false; referencedRelation: 'gyms'; referencedColumns: ['id'] },
         ];
       };
+      gym_reviews: {
+        Row: { body: string; created_at: string; gym_id: string; id: string; is_sample: boolean; rating: number; updated_at: string; user_id: string | null };
+        Insert: { body: string; created_at?: string; gym_id: string; id?: string; is_sample?: boolean; rating: number; updated_at?: string; user_id?: string | null };
+        Update: Partial<Database['public']['Tables']['gym_reviews']['Insert']>;
+        Relationships: [
+          { foreignKeyName: 'gym_reviews_gym_id_fkey'; columns: ['gym_id']; isOneToOne: false; referencedRelation: 'gyms'; referencedColumns: ['id'] },
+          { foreignKeyName: 'gym_reviews_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+        ];
+      };
       gym_training_styles: {
         Row: { gym_id: string; style_id: number };
         Insert: { gym_id: string; style_id: number };
@@ -229,6 +238,15 @@ export type Database = {
           { foreignKeyName: 'purchases_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
         ];
       };
+      review_reports: {
+        Row: { created_at: string; reason: string | null; reporter_id: string; review_id: string };
+        Insert: { created_at?: string; reason?: string | null; reporter_id: string; review_id: string };
+        Update: { created_at?: string; reason?: string | null; reporter_id?: string; review_id?: string };
+        Relationships: [
+          { foreignKeyName: 'review_reports_reporter_id_fkey'; columns: ['reporter_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+          { foreignKeyName: 'review_reports_review_id_fkey'; columns: ['review_id']; isOneToOne: false; referencedRelation: 'gym_reviews'; referencedColumns: ['id'] },
+        ];
+      };
       saved_gyms: {
         Row: { created_at: string; gym_id: string; user_id: string };
         Insert: { created_at?: string; gym_id: string; user_id: string };
@@ -254,6 +272,19 @@ export type Database = {
       };
       expire_passes: { Args: never; Returns: number };
       fulfill_purchase: { Args: { p_purchase_id: string }; Returns: string };
+      gym_reviews_for: {
+        Args: { p_gym_id: string };
+        Returns: {
+          author_avatar: string;
+          author_name: string;
+          body: string;
+          created_at: string;
+          id: string;
+          is_mine: boolean;
+          is_sample: boolean;
+          rating: number;
+        }[];
+      };
       search_gyms: {
         Args: {
           p_city?: string;
