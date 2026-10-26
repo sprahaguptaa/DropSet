@@ -22,6 +22,7 @@ import { Badge, PartnerBadge } from '@/components/Badge';
 import { Button } from '@/components/Button';
 import { back, Column, EmptyState, IconButton, useWide } from '@/components/layout';
 import { Press } from '@/components/Press';
+import { RatingLine, ReviewsSection, useReviews } from '@/components/Reviews';
 import { T } from '@/components/Text';
 import { asHours, getGym, type GymDetail, type PassOption } from '@/lib/api';
 import { hoursLines, money, passLength, shortDate } from '@/lib/format';
@@ -113,6 +114,7 @@ export default function GymScreen() {
   const current = loaded?.slug === slug ? loaded : null;
   const gym = current ? current.gym : undefined;
   const error = current?.error ?? null;
+  const { reviews, summary, userId, reload } = useReviews(gym?.id ?? null);
 
   useEffect(() => {
     getGym(slug)
@@ -199,6 +201,7 @@ export default function GymScreen() {
           })}
         </View>
         <T v="title1">{gym.name}</T>
+        <RatingLine summary={summary} />
         <View style={styles.addressRow}>
           <MapPin size={16} color={color.muted} weight="fill" />
           <T v="callout" c="ink2" style={styles.flex}>
@@ -273,6 +276,15 @@ export default function GymScreen() {
           )}
         </View>
       </View>
+
+      <ReviewsSection
+        gymId={gym.id}
+        slug={gym.slug}
+        googleQuery={`${gym.name} ${address}`}
+        reviews={reviews}
+        userId={userId}
+        reload={reload}
+      />
 
       <T v="footnote" c="muted" style={styles.source}>
         {fromOsm

@@ -198,5 +198,49 @@ export async function activatePass(id: string) {
   return data;
 }
 
+// ---------- reviews (1-5 dumbbells, 40 words) ----------
+
+export const REVIEW_MAX_WORDS = 40;
+
+export type Review = {
+  id: string;
+  rating: number;
+  body: string;
+  is_sample: boolean; // placeholder: labeled in the UI, never counted in the rating
+  created_at: string;
+  author_name: string | null;
+  author_avatar: string | null;
+  is_mine: boolean;
+};
+
+export type ReviewSummary = { average: number | null; count: number };
+
+export async function getReviews(gymId: string): Promise<{ reviews: Review[]; summary: ReviewSummary }> {
+  const { data, error } = await supabase.rpc('gym_reviews_for', { p_gym_id: gymId });
+  fail(error);
+  const reviews = (data ?? []) as Review[];
+  const real = reviews.filter((r) => !r.is_sample);
+  const average = real.length ? real.reduce((sum, r) => sum + r.rating, 0) / real.length : null;
+  return { reviews, summary: { average, count: real.length } };
+}
+
+// One review per person per gym: posting again replaces your earlier review.
+export async function saveReview(userId: string, gymId: string, rating: number, body: string) {
+  const { error } = await supabase
+    .from('gym_reviews')
+    .upsert({ user_id: userId, gym_id: gymId, rating, body: body.trim() }, { onConflict: 'gym_id,user_id' });
+  fail(error);
+}
+
+export async function deleteReview(id: string) {
+  const { error } = await supabase.from('gym_reviews').delete().eq('id', id);
+  fail(error);
+}
+
+export async function reportReview(userId: string, reviewId: string) {
+  const { error } = await supabase.from('review_reports').insert({ review_id: reviewId, reporter_id: userId });
+  if (error && error.code !== '23505') fail(error); // already reported counts as done
+}
+
 export type HoursJson = Record<string, string>;
 export const asHours = (h: Json | null) => (h && typeof h === 'object' && !Array.isArray(h) ? (h as HoursJson) : null);
