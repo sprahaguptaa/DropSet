@@ -33,7 +33,7 @@ export const ActiveBadge = () => <Badge label="Active" tone="active" icon={Light
 
 export function PassStatus({ status }: { status: PassStatusValue }) {
   if (status === 'active') return <ActiveBadge />;
-  if (status === 'inactive') return <Badge label="Ready to activate" icon={QrCode} />;
+  if (status === 'inactive') return <Badge label="Ready to use" icon={QrCode} />;
   return <Badge label={status === 'expired' ? 'Expired' : 'Cancelled'} />;
 }
 

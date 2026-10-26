@@ -48,6 +48,14 @@
         }
       ],
       [
+        "expo-camera",
+        {
+          "cameraPermission": "DropSet uses the camera so gym staff can scan pass QR codes.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
+      ],
+      [
         "expo-image-picker",
         {
           "photosPermission": "DropSet uses your photos so you can set a profile picture."

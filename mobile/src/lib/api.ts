@@ -192,10 +192,57 @@ export async function getPass(id: string): Promise<PassWithGym | null> {
   return data;
 }
 
-export async function activatePass(id: string) {
-  const { data, error } = await supabase.rpc('activate_pass', { p_pass_id: id });
+// ---------- checkout + front desk ----------
+
+// Simulated payment for the demo: records a purchase and issues the pass. Returns the new pass id.
+export async function demoCheckout(optionId: string): Promise<string> {
+  const { data, error } = await supabase.rpc('demo_checkout', { p_option_id: optionId });
   fail(error);
-  return data;
+  return data as string;
+}
+
+export type StaffGym = { id: string; name: string; city: string; slug: string };
+
+export async function getStaffGyms(): Promise<StaffGym[]> {
+  const { data, error } = await supabase.from('gym_staff').select('gyms(id, name, city, slug)').order('created_at');
+  fail(error);
+  return (data ?? []).flatMap((r) => (r.gyms ? [r.gyms] : []));
+}
+
+export type CheckInResult = 'checked_in' | 'already_in' | 'expired' | 'cancelled' | 'not_found';
+
+export type DeskResult = {
+  result: CheckInResult;
+  pass_type: PassType | null;
+  duration_days: number | null;
+  expires_at: string | null;
+  holder_name: string | null;
+  holder_avatar: string | null;
+  checked_in_at: string | null;
+};
+
+// Staff scan (full QR value) or type (8-character code). Starting the pass happens here, at the desk.
+export async function deskCheckIn(gymId: string, code: string): Promise<DeskResult> {
+  const { data, error } = await supabase.rpc('desk_check_in', { p_gym_id: gymId, p_code: code });
+  fail(error);
+  return (data as DeskResult[])[0];
+}
+
+export type DeskStats = {
+  today: number;
+  week: number;
+  month: number;
+  visitors: number;
+  new: number;
+  passes_sold: number;
+  revenue_cents: number;
+  recent: { at: string; name: string; pass_type: PassType }[];
+};
+
+export async function getDeskStats(gymId: string): Promise<DeskStats> {
+  const { data, error } = await supabase.rpc('desk_stats', { p_gym_id: gymId });
+  fail(error);
+  return data as unknown as DeskStats;
 }
 
 // ---------- reviews (1-5 dumbbells, 40 words) ----------

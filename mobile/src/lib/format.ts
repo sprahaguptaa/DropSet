@@ -62,6 +62,10 @@ export function shortDate(iso: string) {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+export function clockTime(iso: string) {
+  return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
+}
+
 export function timeLeft(iso: string) {
   const ms = new Date(iso).getTime() - Date.now();
   if (ms <= 0) return 'Expired';

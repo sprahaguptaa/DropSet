@@ -29,8 +29,9 @@ src/app/                 every file is a screen (URL on web)
   search.tsx             where + training style + price
   results.tsx            gyms within 30 mi, nearest first
   gym/[slug].tsx         gym profile + pass options
-  checkout/[optionId].tsx  order summary (payments arrive with Stripe)
-  pass/[id].tsx          QR pass + Activate
+  checkout/[optionId].tsx  order summary + demo checkout (simulated payment)
+  pass/[id].tsx          ticket: QR + 8-character code, flips to Active when the desk scans it
+  desk.tsx               front desk for gym staff: scan/type a pass, DropSet stats
 src/components/          UI kit: Button, TextField, Chip, Badge, GymCard, ...
 src/lib/api.ts           EVERY Supabase call. Screens never query directly.
 src/lib/database.types.ts  generated from the live schema
@@ -77,8 +78,8 @@ No environment variables are needed; the app already points at the team's Supaba
 |---|---|---|
 | Gym search & discovery | Done: 210 gyms, 30-mile search, filters | Google Places autocomplete (store `place_id` only) |
 | Gym profile pages | Done | Real gym photos in `gym_photos`, prices for more gyms |
-| Pass purchase | Checkout screen built, Pay disabled | Express: Stripe PaymentIntent + webhook → `fulfill_purchase` |
-| Accounts & profiles | Done (Supabase Auth) | Avatar upload |
-| Digital pass & check-in | QR + Activate built | Gym-side scanner using `validate_pass` |
+| Pass purchase | Demo checkout (simulated payment) | Stripe test mode: PaymentIntent + webhook → `fulfill_purchase` |
+| Accounts & profiles | Done (Supabase Auth, profile photo, reviews) | Public profiles + privacy toggles (Phase 4) |
+| Digital pass & check-in | Done: ticket + `/desk` scan/type + stats | Gym staff invites (Phase 6) |
 
 Credits: gym locations © OpenStreetMap contributors (ODbL). Placeholder photos from Unsplash.

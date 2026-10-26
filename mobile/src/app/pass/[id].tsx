@@ -1,22 +1,20 @@
 import { useLocalSearchParams } from 'expo-router';
-import { Lightning, WarningCircle } from 'phosphor-react-native';
+import { WarningCircle } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import { PassStatus } from '@/components/Badge';
-import { Button } from '@/components/Button';
 import { back, EmptyState, ScreenHeader, ScrollScreen } from '@/components/layout';
 import { T } from '@/components/Text';
-import { activatePass, getPass, type PassWithGym } from '@/lib/api';
+import { getPass, type PassWithGym } from '@/lib/api';
 import { passLength, shortDate, timeLeft } from '@/lib/format';
 import { color, font, layout, radius, shadow, space } from '@/theme/tokens';
 
 export default function PassScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const [pass, setPass] = useState<PassWithGym | null | undefined>(undefined);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const waiting = pass?.status === 'inactive';
 
   useEffect(() => {
     getPass(id)
@@ -24,18 +22,16 @@ export default function PassScreen() {
       .catch(() => setPass(null));
   }, [id]);
 
-  async function activate() {
-    setBusy(true);
-    setError(null);
-    try {
-      await activatePass(id);
-      setPass(await getPass(id));
-    } catch (e) {
-      setError((e as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  }
+  // While the ticket waits at the desk, check every few seconds so it flips to Active the moment staff scan it.
+  useEffect(() => {
+    if (!waiting) return;
+    const timer = setInterval(() => {
+      getPass(id)
+        .then((p) => p && p.status !== 'inactive' && setPass(p))
+        .catch(() => {});
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [id, waiting]);
 
   if (pass === undefined) return <ActivityIndicator color={color.ink} style={{ flex: 1, backgroundColor: color.canvas }} />;
 
@@ -60,8 +56,8 @@ export default function PassScreen() {
             </View>
             <View style={styles.qrWrap}>
               <QRCode value={pass.code} size={208} color={color.ink} backgroundColor={color.card} />
-              <T v="footnote" c="muted" style={styles.code}>
-                {pass.code.slice(0, 4).toUpperCase()} {pass.code.slice(4, 8).toUpperCase()} {pass.code.slice(-4).toUpperCase()}
+              <T v="title3" style={styles.code} selectable>
+                {pass.short_code.slice(0, 4)}-{pass.short_code.slice(4)}
               </T>
             </View>
             <View style={styles.ticketFoot}>
@@ -70,7 +66,7 @@ export default function PassScreen() {
                 {pass.status === 'active' && pass.expires_at
                   ? `${timeLeft(pass.expires_at)} · until ${shortDate(pass.expires_at)}`
                   : pass.status === 'inactive'
-                    ? 'Activate when you arrive'
+                    ? 'Show this at the front desk'
                     : pass.expires_at
                       ? `Ended ${shortDate(pass.expires_at)}`
                       : ''}
@@ -78,19 +74,13 @@ export default function PassScreen() {
             </View>
           </View>
 
-          {pass.status === 'inactive' && (
-            <View style={styles.actions}>
-              <Button label="Activate pass" icon={Lightning} onPress={activate} loading={busy} />
-              <T v="footnote" c="muted" style={styles.center}>
-                Only activate at the front desk. Your {passLength(pass.duration_days)} start the moment you tap.
-              </T>
-            </View>
-          )}
-          {error && (
-            <T v="callout" c="danger" style={styles.center}>
-              {error}
-            </T>
-          )}
+          <T v="footnote" c="muted" style={styles.center}>
+            {pass.status === 'inactive'
+              ? `Staff scan the QR or type the code. Your ${passLength(pass.duration_days)} pass starts then.`
+              : pass.status === 'active'
+                ? 'Checked in. Show this again if the desk asks.'
+                : 'This pass has ended.'}
+          </T>
         </ScrollScreen>
       )}
     </View>
@@ -104,7 +94,7 @@ const styles = StyleSheet.create({
   ticketActive: { borderWidth: 2, borderColor: color.mint },
   ticketHead: { backgroundColor: color.ink, padding: space.xxl, gap: 4 },
   qrWrap: { alignItems: 'center', paddingVertical: space.xxl, gap: space.m },
-  code: { fontFamily: font.bold, letterSpacing: 2 },
+  code: { fontFamily: font.extrabold, letterSpacing: 3 },
   ticketFoot: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -114,6 +104,5 @@ const styles = StyleSheet.create({
     borderTopColor: color.line,
     borderStyle: 'dashed',
   },
-  actions: { gap: space.m },
   center: { textAlign: 'center' },
 });

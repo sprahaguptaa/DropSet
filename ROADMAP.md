@@ -24,11 +24,12 @@ free promotion for that gym and fresh, verified data for travelers.
 
 | Area | State |
 |---|---|
-| Data | 210 Phoenix-area gyms (25 researched + 185 OpenStreetMap), coordinates, styles, 19 priced pass options |
+| Data | 210 Phoenix-area gyms (25 researched + 185 OpenStreetMap), coordinates, styles. Real prices for 15 gyms, real hours for 26; the rest have **demo** prices and hours (flagged, footnoted) |
 | Search | City / airport / campus / near me, style + price filters, 30-mile radius, nearest first |
 | Gym page | Pass options with verified/estimated price labels, hours, amenities, save, 1-5 dumbbell reviews + Google Maps reviews link |
 | Accounts | Supabase Auth (email), profile name + home city + photo, saved gyms |
-| Passes | Passes list, QR + Activate (`activate_pass`), checkout summary (Pay disabled) |
+| Passes | Demo checkout (simulated payment) → ticket with QR + 8-character code → staff scan it at `/desk`, which starts the pass and logs the check-in |
+| Front desk | `/desk` for `gym_staff`: scan (camera) or type a code, plus DropSet check-ins, visitors (new vs returning), passes sold and revenue for the last 30 days |
 | Platform | Expo app (web + Expo Go), deployed on Vercel, no `.env` needed, Supabase email links go to the live site |
 
 ## Decisions
@@ -39,7 +40,10 @@ free promotion for that gym and fresh, verified data for travelers.
 | Daily log vs pass check-in | Separate tables | Existing `check_ins` = a pass activated at a gym desk. Daily logs live in a new `workouts` table. Never mix them. |
 | Saved gyms vs following a gym | Keep the heart as **Save** (trip shortlist) | **Follow gym** ships only in Phase 6, when gyms can post. Before that it would do nothing. |
 | Trip mode UX | Smart pick inline, not a chatbot | Suggest the best-value pass for the trip length on the gym page and at checkout. A chat assistant can come later if wanted. |
-| Payments | Stripe test mode, **later** (Phase 8) | Where the server code lives (Vercel functions vs Express `server.js`) is still open. |
+| Payments | **Simulated for the demo** (`demo_checkout`), Stripe test mode later (Phase 8) | Demo purchases are real rows with `purchases.is_demo = true`, labeled "demo" at checkout. Stripe replaces only the Pay step; tickets, desk and stats stay the same. Where the Stripe server code lives is still open. |
+| Pass check-in | **Gym staff scan it**; travelers can't self-activate | Every check-in is a real visit verified by the gym (`check_ins.redeemed_by`), which is what revenue share will be counted on. `activate_pass` / `validate_pass` are no longer callable from the app. |
+| Demo prices and hours | Typical prices/hours by gym type, footnote on the gym page | Only where we have no real data. `pass_options.is_demo`, `gyms.hours_is_demo`. Remove before any real launch (see `DATABASE.md`). |
+| Gym traffic comparison | **DropSet numbers only** for now | The desk shows what DropSet brought in. Comparing with a gym's total traffic waits until gyms can share it (Phase 6+). |
 | How we make money | **Decide later** (Phase 9) | Options on the table: sponsored gym placement (always labeled "Sponsored", never changes nearest-first order), revenue share on day passes and gym memberships sold through the app, traveler service fee. `purchases.platform_fee_cents` already exists. |
 | Notifications | In-app first | Push notifications need a development build (not Expo Go). Revisit after Phase 4. |
 | Reviews | **1-5 dumbbells**, 40 words max, any signed-in user, one per gym | Pulled forward from Phase 4 for the demo. Each gym has 3 **sample** reviews: no author, badged "Sample review", left out of the rating, hidden once the gym has 3 real reviews. Remove them with `delete from gym_reviews where is_sample;`. Google's terms don't allow storing their reviews, so every gym links out to Google Maps. Report writes to `review_reports`. |
@@ -90,7 +94,7 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 - **Done when**: you can filter for "3+ racks, chalk OK" and a check-in can confirm or correct a fact.
 
 ### Phase 6: Gym partner portal ⬜
-- `gym_staff` (gym_id, user_id, role); claim-a-gym request, approved manually for now.
+- `gym_staff` exists (Phase 8, SQL-managed). Add a claim-a-gym request, approved manually for now.
 - Staff can edit their gym's description, hours, photos (`gym_photos`), and pass options/prices (RLS limited to their gym).
 - Public gym profile with **Follow gym** (`gym_follows`) and **gym posts** (classes, events, offers) that appear in followers' feeds.
 - "Request price" button on unpriced gyms → a list for outreach.
@@ -101,10 +105,10 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 - Smart pick: for the trip length, compare the gym's pass options (e.g., 3 day passes vs one week pass) and highlight the best value on the gym page and at checkout: *"Staying 4 days? The week pass saves $20."*
 - **Done when**: with dates set, every gym with 2+ pass options shows the cheapest correct choice.
 
-### Phase 8: Payments + front desk ⬜ *(when Sage says go)*
-- Stripe test mode: create a purchase + PaymentIntent server-side, webhook → `fulfill_purchase(purchase_id)` with the service role, pass appears in Passes. Secrets go straight into hosting env vars, never in chat or the repo.
-- `/desk` page for gym staff: scan or type a pass code → `validate_pass` → valid / expired. Restrict to `gym_staff` from Phase 6 (today any signed-in user can call `validate_pass`).
-- **Done when**: test card 4242 4242 4242 4242 buys a day pass, the QR shows in Passes, Activate works, and the desk page validates it.
+### Phase 8: Payments + front desk 🟡 *(front desk + demo checkout done 2026-10-26)*
+- ✅ Ticket (QR + short code), `/desk` scan/type check-in for `gym_staff`, DropSet stats per gym, simulated checkout.
+- ⬜ Stripe test mode: create a purchase + PaymentIntent server-side, webhook → `fulfill_purchase(purchase_id)` with the service role, then drop `demo_checkout`. Secrets go straight into hosting env vars, never in chat or the repo.
+- **Done when**: test card 4242 4242 4242 4242 buys a day pass and the desk checks it in.
 
 ### Phase 9: Monetization ⬜
 - Pick the model (see Decisions). Sponsored placement must be labeled and must not change nearest-first ordering of organic results. Revenue share needs Phase 8 + gym agreements.
