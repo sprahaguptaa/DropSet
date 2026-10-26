@@ -30,11 +30,19 @@ export function useReviews(gymId: string | null) {
     if (!gymId) return;
     getReviews(gymId)
       .then((r) => setLoaded({ key, ...r }))
-      .catch(() => setLoaded({ key, reviews: [], summary: { average: null, count: 0 } }));
+      .catch(() => setLoaded({ key, reviews: [], summary: { average: null, count: 0, samples: 0 } }));
   }, [gymId, key, version]);
 
   const current = loaded?.key === key ? loaded : null;
   return { reviews: current?.reviews ?? null, summary: current?.summary ?? null, userId, reload: () => setVersion((v) => v + 1) };
+}
+
+// "4.0 · 3 sample reviews" / "4.3 · 4 reviews (2 sample)" / "4.5 · 6 reviews"
+function countLabel({ count, samples }: ReviewSummary) {
+  const reviews = `review${count === 1 ? '' : 's'}`;
+  if (!samples) return `${count} ${reviews}`;
+  if (samples === count) return `${count} sample ${reviews}`;
+  return `${count} ${reviews} (${samples} sample)`;
 }
 
 // Sits under the gym name.
@@ -48,7 +56,7 @@ export function RatingLine({ summary }: { summary: ReviewSummary | null }) {
           <T v="callout" style={styles.bold}>
             {summary.average.toFixed(1)}
           </T>
-          {` · ${summary.count} review${summary.count === 1 ? '' : 's'}`}
+          {` · ${countLabel(summary)}`}
         </T>
       ) : (
         <T v="callout" c="muted">
@@ -127,7 +135,7 @@ export function ReviewsSection({ gymId, slug, googleQuery, reviews, userId, relo
       )}
       {hasSamples && (
         <T v="footnote" c="muted">
-          Sample reviews are placeholders until DropSet members review this gym. They don’t count toward the rating.
+          Sample reviews are placeholders until DropSet members review this gym. They disappear once 3 members have.
         </T>
       )}
       <Press onPress={() => Linking.openURL(googleUrl)} haptic={false} accessibilityRole="link" style={styles.google}>

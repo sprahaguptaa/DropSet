@@ -1,5 +1,5 @@
 -- DropSet | seed_sample_reviews.sql: 3 placeholder reviews per active gym (re-runnable).
--- They are labeled "Sample review" in the app, have no author, never count toward a gym's rating,
+-- They are labeled "Sample review" in the app, have no author, are counted in the rating as "sample",
 -- and hide once a gym has 3 real reviews. They only use data we actually have: the gym's training
 -- style, amenities and verified day-pass price. No invented claims about staff, cleanliness, etc.
 -- Remove them all with:  delete from public.gym_reviews where is_sample;
