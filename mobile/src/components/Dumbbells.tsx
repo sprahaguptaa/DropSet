@@ -9,7 +9,7 @@ import { Press } from './Press';
 export function Dumbbell({ size = 16, filled = true }: { size?: number; filled?: boolean }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
-      <G fill={color.ink} fillOpacity={filled ? 1 : 0.16}>
+      <G fill={filled ? color.ember : color.ink} fillOpacity={filled ? 1 : 0.16}>
         <Rect x="6" y="10.25" width="12" height="3.5" rx="1" />
         <Rect x="3.75" y="4.5" width="4" height="15" rx="1.5" />
         <Rect x="16.25" y="4.5" width="4" height="15" rx="1.5" />

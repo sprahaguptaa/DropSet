@@ -1,5 +1,5 @@
 // DropSet design tokens. Every color has one job; keep it that way.
-//   ember  -> primary buttons and prices (>= 20px) only
+//   ember  -> primary buttons, prices (>= 20px) and filled rating dumbbells only
 //   cobalt -> selection, links, focus
 //   mint   -> an ACTIVE pass only
 
