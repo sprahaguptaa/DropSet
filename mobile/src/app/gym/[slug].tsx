@@ -157,6 +157,7 @@ export default function GymScreen() {
         : `https://www.google.com/maps/search/?api=1&query=${gym.lat},${gym.lng}`
       : null;
   const fromOsm = gym.data_source === 'openstreetmap';
+  const hasDemoData = gym.hours_is_demo || gym.pass_options.some((o) => o.is_demo);
 
   function getPass() {
     if (!option) return;
@@ -290,6 +291,7 @@ export default function GymScreen() {
         {fromOsm
           ? 'Location data © OpenStreetMap contributors. Photo is illustrative.'
           : `Details checked ${gym.data_verified_at ? shortDate(gym.data_verified_at) : 'recently'}.${gym.photos.length ? '' : ' Photo is illustrative.'}`}
+        {hasDemoData && ' Some prices and hours here are demo data for a class project. Confirm with the gym before you go.'}
       </T>
     </View>
   );

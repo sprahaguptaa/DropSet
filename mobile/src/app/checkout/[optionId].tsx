@@ -1,12 +1,12 @@
-import { Redirect, useLocalSearchParams } from 'expo-router';
-import { CreditCard, LockSimple, QrCode, Ticket, WarningCircle } from 'phosphor-react-native';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
+import { CreditCard, Info, QrCode, Ticket, WarningCircle } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Button } from '@/components/Button';
 import { back, EmptyState, ScreenHeader, ScrollScreen } from '@/components/layout';
 import { T } from '@/components/Text';
-import { getPassOption } from '@/lib/api';
+import { demoCheckout, getPassOption } from '@/lib/api';
 import { money, passLength } from '@/lib/format';
 import { useAuth } from '@/providers/AuthProvider';
 import { color, layout, radius, shadow, space } from '@/theme/tokens';
@@ -14,16 +14,18 @@ import { color, layout, radius, shadow, space } from '@/theme/tokens';
 type Option = NonNullable<Awaited<ReturnType<typeof getPassOption>>>;
 
 const STEPS = [
-  { icon: CreditCard, title: 'Pay securely', body: 'Card payment through Stripe. DropSet never sees your card number.' },
-  { icon: Ticket, title: 'Your pass lands in Passes', body: 'It stays inactive until you get to the gym.' },
-  { icon: QrCode, title: 'Activate at the desk', body: 'Tap Activate and show the QR code. The clock starts then.' },
+  { icon: CreditCard, title: 'Pay', body: 'Demo checkout: no card is charged and no money moves.' },
+  { icon: Ticket, title: 'Your ticket lands in Passes', body: 'A QR code plus a short code, ready whenever you get there.' },
+  { icon: QrCode, title: 'Scan at the front desk', body: 'Staff scan the QR or type the code. Your pass starts then.' },
 ];
 
-// Order summary. The Pay button switches on when the Stripe sprint lands (Express + webhook -> fulfill_purchase).
+// Order summary + simulated payment (demo_checkout). Stripe test mode replaces the Pay step later (ROADMAP Phase 8).
 export default function Checkout() {
   const { optionId } = useLocalSearchParams<{ optionId: string }>();
   const { ready, session } = useAuth();
   const [option, setOption] = useState<Option | null | undefined>(undefined);
+  const [paying, setPaying] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     getPassOption(optionId)
@@ -32,6 +34,18 @@ export default function Checkout() {
   }, [optionId]);
 
   if (ready && !session) return <Redirect href={{ pathname: '/login', params: { next: `/checkout/${optionId}` } }} />;
+
+  async function pay() {
+    setPaying(true);
+    setError(null);
+    try {
+      const passId = await demoCheckout(optionId);
+      router.replace({ pathname: '/pass/[id]', params: { id: passId } });
+    } catch {
+      setError('Couldn’t complete the purchase. Try again.');
+      setPaying(false);
+    }
+  }
 
   return (
     <View style={styles.root}>
@@ -85,12 +99,17 @@ export default function Checkout() {
           </View>
 
           <View style={styles.notice}>
-            <LockSimple size={18} color={color.ink} weight="bold" />
+            <Info size={18} color={color.ink} weight="bold" />
             <T v="callout" c="ink2" style={styles.flex}>
-              Payments switch on with Stripe test mode in the pass-purchase sprint. Nothing is charged yet.
+              Demo checkout for our class project. You get a real, scannable pass, but no card is charged.
             </T>
           </View>
-          <Button label={`Pay ${money(option.price_cents)}`} disabled />
+          {error && (
+            <T v="callout" c="danger">
+              {error}
+            </T>
+          )}
+          <Button label={`Pay ${money(option.price_cents)} · demo`} onPress={pay} loading={paying} />
         </ScrollScreen>
       )}
     </View>

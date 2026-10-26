@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { Camera, MapPinLine, SignIn, SignOut, User } from 'phosphor-react-native';
+import { Camera, CaretRight, MapPinLine, SignIn, SignOut, Storefront, User } from 'phosphor-react-native';
 import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
@@ -13,6 +13,7 @@ import { T } from '@/components/Text';
 import { TextField } from '@/components/TextField';
 import { removeAvatar, updateProfile, uploadAvatar } from '@/lib/api';
 import { pickAvatar } from '@/lib/photo-picker';
+import { useStaffGyms } from '@/lib/use-staff-gyms';
 import { firstName, useAuth } from '@/providers/AuthProvider';
 import { color, font, layout, radius, shadow, space } from '@/theme/tokens';
 
@@ -95,6 +96,24 @@ function IdentityCard() {
   );
 }
 
+// Only for accounts linked to a gym in gym_staff.
+function DeskLink() {
+  const gyms = useStaffGyms();
+  if (!gyms?.length) return null;
+  return (
+    <Press onPress={() => router.push('/desk')} scaleTo={0.985} accessibilityRole="link" style={[styles.desk, shadow.card]}>
+      <Storefront size={24} color={color.ink} />
+      <View style={styles.flex}>
+        <T v="headline">Front desk</T>
+        <T v="footnote" c="muted" numberOfLines={1}>
+          Check in passes at {gyms.length === 1 ? gyms[0].name : `${gyms.length} gyms`}
+        </T>
+      </View>
+      <CaretRight size={18} color={color.muted} />
+    </Press>
+  );
+}
+
 // Starts from the saved profile; remounted (via key) whenever the saved profile changes.
 function DetailsForm() {
   const auth = useAuth();
@@ -157,6 +176,7 @@ export default function Profile() {
       <TabTitle title="Profile" width={layout.form} />
       <ScrollScreen width={layout.form} gap={space.xxl}>
         <IdentityCard />
+        <DeskLink />
 
         <DetailsForm key={profile?.updated_at ?? 'loading'} />
 
@@ -184,6 +204,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  desk: { flexDirection: 'row', alignItems: 'center', gap: space.m, padding: space.l, borderRadius: radius.l, backgroundColor: color.card },
   photoLinks: { flexDirection: 'row', gap: space.l, marginTop: 6 },
   link: { fontFamily: font.bold },
   form: { gap: space.l },

@@ -12,7 +12,7 @@ Live web app: https://dropset-app.vercel.app (deploy with `npm run deploy` in `m
 mobile/  (Expo app: iOS, Android, web)
    |  supabase-js with the PUBLISHABLE key; Supabase Auth sessions
    v
-Supabase (project bcskupguftgwjcpkvnoo): Postgres + RLS + RPCs (search_gyms, activate_pass, validate_pass)
+Supabase (project bcskupguftgwjcpkvnoo): Postgres + RLS + RPCs (search_gyms, demo_checkout, desk_check_in, desk_stats)
    ^
    |  pg pool (server-side secrets)
 server.js (Express): Sprint 1 template login today

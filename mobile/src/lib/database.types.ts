@@ -22,12 +22,13 @@ export type Database = {
         Relationships: [];
       };
       check_ins: {
-        Row: { checked_in_at: string; gym_id: string; id: string; pass_id: string; user_id: string };
-        Insert: { checked_in_at?: string; gym_id: string; id?: string; pass_id: string; user_id: string };
-        Update: { checked_in_at?: string; gym_id?: string; id?: string; pass_id?: string; user_id?: string };
+        Row: { checked_in_at: string; gym_id: string; id: string; pass_id: string; redeemed_by: string | null; user_id: string };
+        Insert: { checked_in_at?: string; gym_id: string; id?: string; pass_id: string; redeemed_by?: string | null; user_id: string };
+        Update: { checked_in_at?: string; gym_id?: string; id?: string; pass_id?: string; redeemed_by?: string | null; user_id?: string };
         Relationships: [
           { foreignKeyName: 'check_ins_gym_id_fkey'; columns: ['gym_id']; isOneToOne: false; referencedRelation: 'gyms'; referencedColumns: ['id'] },
           { foreignKeyName: 'check_ins_pass_id_fkey'; columns: ['pass_id']; isOneToOne: false; referencedRelation: 'passes'; referencedColumns: ['id'] },
+          { foreignKeyName: 'check_ins_redeemed_by_fkey'; columns: ['redeemed_by']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
           { foreignKeyName: 'check_ins_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
         ];
       };
@@ -57,6 +58,15 @@ export type Database = {
           { foreignKeyName: 'gym_reviews_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
         ];
       };
+      gym_staff: {
+        Row: { created_at: string; gym_id: string; user_id: string };
+        Insert: { created_at?: string; gym_id: string; user_id: string };
+        Update: { created_at?: string; gym_id?: string; user_id?: string };
+        Relationships: [
+          { foreignKeyName: 'gym_staff_gym_id_fkey'; columns: ['gym_id']; isOneToOne: false; referencedRelation: 'gyms'; referencedColumns: ['id'] },
+          { foreignKeyName: 'gym_staff_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+        ];
+      };
       gym_training_styles: {
         Row: { gym_id: string; style_id: number };
         Insert: { gym_id: string; style_id: number };
@@ -77,6 +87,7 @@ export type Database = {
           description: string | null;
           google_place_id: string | null;
           hours: Json | null;
+          hours_is_demo: boolean;
           id: string;
           is_active: boolean;
           is_partner: boolean;
@@ -104,6 +115,7 @@ export type Database = {
           description?: string | null;
           google_place_id?: string | null;
           hours?: Json | null;
+          hours_is_demo?: boolean;
           id?: string;
           is_active?: boolean;
           is_partner?: boolean;
@@ -132,6 +144,7 @@ export type Database = {
           gym_id: string;
           id: string;
           is_active: boolean;
+          is_demo: boolean;
           name: string;
           notes: string | null;
           pass_type: Database['public']['Enums']['pass_type'];
@@ -148,6 +161,7 @@ export type Database = {
           gym_id: string;
           id?: string;
           is_active?: boolean;
+          is_demo?: boolean;
           name: string;
           notes?: string | null;
           pass_type: Database['public']['Enums']['pass_type'];
@@ -173,6 +187,7 @@ export type Database = {
           id: string;
           pass_type: Database['public']['Enums']['pass_type'];
           purchase_id: string;
+          short_code: string;
           status: Database['public']['Enums']['pass_status'];
           updated_at: string;
           user_id: string;
@@ -187,6 +202,7 @@ export type Database = {
           id?: string;
           pass_type: Database['public']['Enums']['pass_type'];
           purchase_id: string;
+          short_code?: string;
           status?: Database['public']['Enums']['pass_status'];
           updated_at?: string;
           user_id: string;
@@ -211,6 +227,7 @@ export type Database = {
           currency: string;
           gym_id: string;
           id: string;
+          is_demo: boolean;
           pass_option_id: string;
           platform_fee_cents: number;
           status: Database['public']['Enums']['purchase_status'];
@@ -224,6 +241,7 @@ export type Database = {
           currency?: string;
           gym_id: string;
           id?: string;
+          is_demo?: boolean;
           pass_option_id: string;
           platform_fee_cents?: number;
           status?: Database['public']['Enums']['purchase_status'];
@@ -270,6 +288,20 @@ export type Database = {
         Returns: Database['public']['Tables']['passes']['Row'];
         SetofOptions: { from: '*'; to: 'passes'; isOneToOne: true; isSetofReturn: false };
       };
+      demo_checkout: { Args: { p_option_id: string }; Returns: string };
+      desk_check_in: {
+        Args: { p_code: string; p_gym_id: string };
+        Returns: {
+          checked_in_at: string;
+          duration_days: number;
+          expires_at: string;
+          holder_avatar: string;
+          holder_name: string;
+          pass_type: Database['public']['Enums']['pass_type'];
+          result: string;
+        }[];
+      };
+      desk_stats: { Args: { p_gym_id: string }; Returns: Json };
       expire_passes: { Args: never; Returns: number };
       fulfill_purchase: { Args: { p_purchase_id: string }; Returns: string };
       gym_reviews_for: {
