@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from '@/components/Avatar';
 import { Press } from '@/components/Press';
+import { DumbbellScore } from '@/components/Dumbbells';
 import { PriceTag } from '@/components/PriceTag';
 import { ScrollScreen, Section, useWide } from '@/components/layout';
 import { T } from '@/components/Text';
@@ -154,6 +155,7 @@ export default function Explore() {
                     <T v="headline" numberOfLines={1}>
                       {g.name}
                     </T>
+                    <DumbbellScore value={g.rating_avg} count={g.rating_count} size={12} />
                     <T v="footnote" c="muted" numberOfLines={1}>
                       {g.city} · {miles(g.distance_m)}
                     </T>
@@ -176,7 +178,7 @@ export default function Explore() {
           {[
             ['Find', 'Search by city and how you train. Real prices up front.'],
             ['Buy', 'Day, week or month pass. No membership, no contract.'],
-            ['Check in', 'Show your QR pass at the desk. The clock starts when you activate.'],
+            ['Check in', 'Show your QR pass at the desk. Staff scan it and your pass starts.'],
           ].map(([title, body], i) => (
             <View key={title} style={styles.step}>
               <T v="title2" c="onDark">

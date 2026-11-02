@@ -7,12 +7,12 @@ import { color, font, radius } from '@/theme/tokens';
 
 import { T } from './Text';
 
-type Tone = 'neutral' | 'partner' | 'active';
+type Tone = 'neutral' | 'ink' | 'active';
 type PassStatusValue = Enums<'pass_status'>;
 
 const tones: Record<Tone, { bg: string; fg: string }> = {
   neutral: { bg: color.sunken, fg: color.ink2 },
-  partner: { bg: color.ink, fg: color.onDark },
+  ink: { bg: color.ink, fg: color.onDark },
   active: { bg: color.mintTint, fg: '#0B7A4B' },
 };
 
@@ -28,7 +28,7 @@ export function Badge({ label, tone = 'neutral', icon: IconCmp }: { label: strin
   );
 }
 
-export const PartnerBadge = () => <Badge label="Partner" tone="partner" icon={Handshake} />;
+export const PartnerBadge = () => <Badge label="Partner" tone="ink" icon={Handshake} />;
 export const ActiveBadge = () => <Badge label="Active" tone="active" icon={Lightning} />;
 
 export function PassStatus({ status }: { status: PassStatusValue }) {

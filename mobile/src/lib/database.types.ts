@@ -340,6 +340,8 @@ export type Database = {
           min_price_confidence: Database['public']['Enums']['price_confidence'];
           min_price_pass_type: Database['public']['Enums']['pass_type'];
           name: string;
+          rating_avg: number;
+          rating_count: number;
           slug: string;
           state: string;
           style_slugs: string[];

@@ -13,6 +13,7 @@ import { useSaved } from '@/providers/SavedProvider';
 import { color, font, radius, shadow, space } from '@/theme/tokens';
 
 import { PartnerBadge, PriceBadge } from './Badge';
+import { DumbbellScore } from './Dumbbells';
 import { Press } from './Press';
 import { PriceTag } from './PriceTag';
 import { T } from './Text';
@@ -83,6 +84,7 @@ export function GymCard({ gym, wide }: { gym: GymResult; wide?: boolean }) {
           <T v="headline" numberOfLines={2} style={wide && styles.nameWide}>
             {gym.name}
           </T>
+          <DumbbellScore value={gym.rating_avg} count={gym.rating_count} />
           <View style={styles.meta}>
             <MapPin size={13} color={color.muted} weight="fill" />
             <T v="footnote" c="ink2" numberOfLines={1} style={styles.metaText}>
@@ -90,9 +92,11 @@ export function GymCard({ gym, wide }: { gym: GymResult; wide?: boolean }) {
               {distance ? ` · ${distance}` : ''}
             </T>
           </View>
-          <T v="footnote" c="muted" numberOfLines={1}>
-            {amenities || gym.address_line1 || ' '}
-          </T>
+          {wide && (
+            <T v="footnote" c="muted" numberOfLines={1}>
+              {amenities || gym.address_line1 || ' '}
+            </T>
+          )}
         </View>
         <View style={styles.bottom}>
           <PriceBadge confidence={gym.min_price_confidence} />

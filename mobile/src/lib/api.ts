@@ -25,6 +25,8 @@ export type GymResult = {
   amenity_slugs: string[];
   cover_photo_url: string | null;
   is_partner: boolean;
+  rating_avg: number | null; // dumbbells, same reviews the gym page shows
+  rating_count: number;
 };
 
 export type SearchParams = {
@@ -140,12 +142,22 @@ export async function setSaved(userId: string, gymId: string, saved: boolean) {
   fail(error);
 }
 
+// Same rule as gym_reviews_for and search_gyms: samples count only until a gym has 3 member reviews.
+function shownRating(rows: { rating: number; is_sample: boolean }[]) {
+  const members = rows.filter((r) => !r.is_sample);
+  const shown = members.length >= 3 ? members : rows;
+  return {
+    rating_avg: shown.length ? shown.reduce((sum, r) => sum + r.rating, 0) / shown.length : null,
+    rating_count: shown.length,
+  };
+}
+
 // Saved gyms shaped like search results so the same card renders them.
 export async function getSavedGyms(): Promise<GymResult[]> {
   const { data, error } = await supabase
     .from('saved_gyms')
     .select(
-      'created_at, gyms(id, slug, name, address_line1, city, lat, lng, is_partner, gym_training_styles(training_styles(slug)), gym_amenities(amenities(slug)), gym_photos(url, sort_order), pass_options(price_cents, pass_type, price_confidence, is_active))',
+      'created_at, gyms(id, slug, name, address_line1, city, lat, lng, is_partner, gym_training_styles(training_styles(slug)), gym_amenities(amenities(slug)), gym_photos(url, sort_order), pass_options(price_cents, pass_type, price_confidence, is_active), gym_reviews(rating, is_sample))',
     )
     .order('created_at', { ascending: false });
   fail(error);
@@ -170,6 +182,7 @@ export async function getSavedGyms(): Promise<GymResult[]> {
         amenity_slugs: g.gym_amenities.flatMap((r) => (r.amenities ? [r.amenities.slug] : [])),
         cover_photo_url: cover?.url ?? null,
         is_partner: g.is_partner,
+        ...shownRating(g.gym_reviews),
       },
     ];
   });
