@@ -1,15 +1,22 @@
-import { useLocalSearchParams } from 'expo-router';
-import { WarningCircle } from 'phosphor-react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Ticket, WarningCircle } from 'phosphor-react-native';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 
 import { PassStatus } from '@/components/Badge';
+import { Button } from '@/components/Button';
 import { back, EmptyState, ScreenHeader, ScrollScreen } from '@/components/layout';
 import { T } from '@/components/Text';
 import { getPass, type PassWithGym } from '@/lib/api';
 import { passLength, shortDate, timeLeft } from '@/lib/format';
 import { color, font, layout, radius, shadow, space } from '@/theme/tokens';
+
+// Back down to the tabs (gym and ticket screens closed), then the Passes tab. Also works when the ticket was opened by link.
+function openMyPasses() {
+  if (router.canDismiss()) router.dismissAll();
+  router.navigate('/passes');
+}
 
 export default function PassScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -81,6 +88,8 @@ export default function PassScreen() {
                 ? 'Checked in. Show this again if the desk asks.'
                 : 'This pass has ended.'}
           </T>
+
+          <Button label="My passes" variant="outline" icon={Ticket} onPress={openMyPasses} />
         </ScrollScreen>
       )}
     </View>

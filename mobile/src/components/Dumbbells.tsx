@@ -1,9 +1,10 @@
 import { StyleSheet, View } from 'react-native';
 import Svg, { G, Rect } from 'react-native-svg';
 
-import { color } from '@/theme/tokens';
+import { color, font } from '@/theme/tokens';
 
 import { Press } from './Press';
+import { T } from './Text';
 
 // DropSet's rating unit: a dumbbell instead of a star.
 export function Dumbbell({ size = 16, filled = true }: { size?: number; filled?: boolean }) {
@@ -36,6 +37,22 @@ export function DumbbellRating({ value, size = 16 }: { value: number | null; siz
   );
 }
 
+// Compact rating for cards: dumbbells + "4.0 (3)". Nothing when a gym has no reviews.
+export function DumbbellScore({ value, count, size = 13 }: { value: number | null; count: number; size?: number }) {
+  if (value == null || !count) return null;
+  return (
+    <View style={styles.score}>
+      <DumbbellRating value={value} size={size} />
+      <T v="footnote" c="ink2">
+        <T v="footnote" style={styles.scoreValue}>
+          {value.toFixed(1)}
+        </T>{' '}
+        ({count})
+      </T>
+    </View>
+  );
+}
+
 // Tap a dumbbell to rate 1-5.
 export function DumbbellPicker({ value, onChange }: { value: number; onChange: (rating: number) => void }) {
   return (
@@ -60,4 +77,6 @@ export function DumbbellPicker({ value, onChange }: { value: number; onChange: (
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   pick: { padding: 4 },
+  score: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  scoreValue: { fontFamily: font.bold },
 });

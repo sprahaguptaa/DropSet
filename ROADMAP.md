@@ -25,10 +25,10 @@ free promotion for that gym and fresh, verified data for travelers.
 | Area | State |
 |---|---|
 | Data | 210 Phoenix-area gyms (25 researched + 185 OpenStreetMap), coordinates, styles. Real prices for 15 gyms, real hours for 26; the rest have **demo** prices and hours (flagged, footnoted) |
-| Search | City / airport / campus / near me, style + price filters, 30-mile radius, nearest first |
+| Search | City / airport / campus / near me, style + price filters, 30-mile radius, nearest first, dumbbell rating on every card |
 | Gym page | Pass options with verified/estimated price labels, hours, amenities, save, 1-5 dumbbell reviews + Google Maps reviews link |
 | Accounts | Supabase Auth (email), profile name + home city + photo, saved gyms |
-| Passes | Demo checkout (simulated payment) → ticket with QR + 8-character code → staff scan it at `/desk`, which starts the pass and logs the check-in |
+| Passes | Demo checkout (simulated payment) → ticket with QR + 8-character code → staff scan it at `/desk`, which starts the pass and logs the check-in. Passes tab groups Ready to use (newest tagged "New") / Active / Used; the ticket has a "My passes" button |
 | Front desk | `/desk` for `gym_staff`: scan (camera) or type a code, plus DropSet check-ins, visitors (new vs returning), passes sold and revenue for the last 30 days |
 | Platform | Expo app (web + Expo Go), deployed on Vercel, no `.env` needed, Supabase email links go to the live site |
 
