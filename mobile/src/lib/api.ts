@@ -106,7 +106,17 @@ export async function getProfile(userId: string) {
 
 export async function updateProfile(
   userId: string,
-  patch: { display_name?: string; home_city?: string | null; avatar_url?: string | null; training_mode?: TrainingMode },
+  patch: {
+    display_name?: string;
+    home_city?: string | null;
+    avatar_url?: string | null;
+    training_mode?: TrainingMode;
+    username?: string;
+    bio?: string | null;
+    share_gym?: boolean;
+    show_checkins?: boolean;
+    show_goals?: boolean;
+  },
 ) {
   const { error } = await supabase.from('profiles').update(patch).eq('id', userId);
   fail(error);
@@ -288,6 +298,150 @@ export async function addGoalEntry(userId: string, goalId: string, value: number
 export async function deleteGoalEntry(id: string) {
   const { error } = await supabase.from('goal_entries').delete().eq('id', id);
   fail(error);
+}
+
+// ---------- social (other people are only read through privacy-checked database functions) ----------
+
+export const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
+
+export type Person = { id: string; username: string; display_name: string | null; avatar_url: string | null; i_follow: boolean };
+
+export type ProfileWorkout = { id: string; logged_on: string; kind: string; note: string | null; gym_name: string | null; gym_slug: string | null };
+export type ProfileGoal = {
+  id: string;
+  kind: string;
+  lift: string | null;
+  unit: string;
+  start_value: number;
+  target_value: number;
+  achieved_at: string | null;
+  current: number;
+};
+export type PartnerStatus = 'requested' | 'incoming' | 'partners';
+
+export type PublicProfile = {
+  id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  bio: string | null;
+  followers: number;
+  following: number;
+  is_me: boolean;
+  i_follow: boolean;
+  follows_me: boolean;
+  i_blocked: boolean;
+  show_checkins: boolean;
+  show_goals: boolean;
+  streak: number | null; // null when hidden
+  workouts: ProfileWorkout[] | null;
+  goals: ProfileGoal[] | null; // null when hidden
+  partner_status: PartnerStatus | null;
+};
+
+// null when there's no such person, or when they blocked you.
+export async function getPublicProfile(username: string, today: string): Promise<PublicProfile | null> {
+  const { data, error } = await supabase.rpc('get_profile_by_username', { p_username: username, p_today: today });
+  fail(error);
+  return ((data ?? [])[0] as unknown as PublicProfile) ?? null;
+}
+
+export async function searchPeople(query: string): Promise<Person[]> {
+  const { data, error } = await supabase.rpc('search_people', { p_query: query });
+  fail(error);
+  return (data ?? []) as Person[];
+}
+
+export async function getFollowList(username: string, followers: boolean): Promise<Person[]> {
+  const { data, error } = await supabase.rpc('get_follow_list', { p_username: username, p_followers: followers });
+  fail(error);
+  return (data ?? []) as Person[];
+}
+
+export async function setFollow(userId: string, follow: boolean) {
+  const { error } = await supabase.rpc('follow', { p_user: userId, p_follow: follow });
+  fail(error);
+}
+
+export async function setBlock(userId: string, block: boolean) {
+  const { error } = await supabase.rpc('set_block', { p_user: userId, p_block: block });
+  fail(error);
+}
+
+export async function reportUser(reporterId: string, reportedId: string, workoutId: string | null = null) {
+  const { error } = await supabase.from('user_reports').insert({ reporter_id: reporterId, reported_id: reportedId, workout_id: workoutId });
+  fail(error);
+}
+
+export async function nudge(userId: string, today: string) {
+  const { error } = await supabase.rpc('nudge', { p_user: userId, p_today: today });
+  fail(error);
+}
+
+export type Nudge = { from_username: string; from_name: string; from_avatar: string | null; created_at: string };
+
+// Unseen nudges; reading them marks them seen.
+export async function takeNudges(): Promise<Nudge[]> {
+  const { data, error } = await supabase.rpc('take_nudges');
+  fail(error);
+  return (data ?? []) as Nudge[];
+}
+
+export async function setPartner(userId: string, action: 'ask' | 'accept' | 'end') {
+  const { error } = await supabase.rpc('set_partner', { p_user: userId, p_action: action });
+  fail(error);
+}
+
+export type Partner = Person & {
+  status: PartnerStatus;
+  streak: number | null;
+  logged_today: boolean | null;
+  missed_yesterday: boolean | null; // only partners ever see this
+};
+
+export async function getPartners(today: string): Promise<Partner[]> {
+  const { data, error } = await supabase.rpc('my_partners', { p_today: today });
+  fail(error);
+  return (data ?? []).map((p) => ({ ...p, i_follow: true })) as Partner[];
+}
+
+export type FeedItem = {
+  item_type: 'workout' | 'goal_hit';
+  item_id: string;
+  at: string;
+  user_id: string;
+  username: string;
+  display_name: string | null;
+  avatar_url: string | null;
+  logged_on: string | null;
+  kind: string | null;
+  note: string | null;
+  gym_name: string | null;
+  gym_slug: string | null;
+  goal_kind: string | null;
+  goal_lift: string | null;
+  goal_unit: string | null;
+  goal_target: number | null;
+  props: number;
+  i_propped: boolean;
+};
+
+export const FEED_PAGE = 30;
+
+export async function getFeed(before?: string): Promise<FeedItem[]> {
+  const { data, error } = await supabase.rpc('get_feed', { p_before: before, p_limit: FEED_PAGE });
+  fail(error);
+  return (data ?? []) as FeedItem[];
+}
+
+// Returns whether you now give props.
+export async function toggleProps(item: FeedItem): Promise<boolean> {
+  const { data, error } = await supabase.rpc(
+    'toggle_props',
+    item.item_type === 'workout' ? { p_workout: item.item_id } : { p_goal: item.item_id },
+  );
+  fail(error);
+  return !!data;
 }
 
 // ---------- checkout + front desk ----------

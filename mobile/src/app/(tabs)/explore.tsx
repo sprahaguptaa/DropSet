@@ -12,6 +12,7 @@ import { DumbbellScore } from '@/components/Dumbbells';
 import { PriceTag } from '@/components/PriceTag';
 import { ScrollScreen, Section, useWide } from '@/components/layout';
 import { T } from '@/components/Text';
+import { NudgeBanner } from '@/components/Social';
 import { TodayCard } from '@/components/TodayCard';
 import { TrainingModePrompt } from '@/components/TrainingMode';
 import { searchGyms, type GymResult } from '@/lib/api';
@@ -88,6 +89,7 @@ export default function Explore() {
 
       {auth.profile && auth.profile.training_mode !== 'traveler' && (
         <View style={[styles.today, wide && styles.todayWide]}>
+          <NudgeBanner />
           <TrainingModePrompt />
           {auth.profile.training_mode === 'daily' && <TodayCard compact />}
         </View>
@@ -212,7 +214,7 @@ export default function Explore() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   greetRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 40 },
-  today: { marginTop: space.l },
+  today: { marginTop: space.l, gap: space.m },
   todayWide: { maxWidth: 720 },
   title: { marginTop: space.s, fontSize: 36, lineHeight: 38, letterSpacing: -1.2 },
   titleWide: { fontSize: 56, lineHeight: 56, letterSpacing: -2 },

@@ -244,9 +244,9 @@ export type Database = {
         ];
       };
       profiles: {
-        Row: { avatar_url: string | null; created_at: string; display_name: string | null; home_city: string | null; id: string; training_mode: string | null; updated_at: string };
-        Insert: { avatar_url?: string | null; created_at?: string; display_name?: string | null; home_city?: string | null; id: string; training_mode?: string | null; updated_at?: string };
-        Update: { avatar_url?: string | null; created_at?: string; display_name?: string | null; home_city?: string | null; id?: string; training_mode?: string | null; updated_at?: string };
+        Row: { avatar_url: string | null; bio: string | null; created_at: string; display_name: string | null; home_city: string | null; id: string; share_gym: boolean; show_checkins: boolean; show_goals: boolean; training_mode: string | null; updated_at: string; username: string | null };
+        Insert: { avatar_url?: string | null; bio?: string | null; created_at?: string; display_name?: string | null; home_city?: string | null; id: string; share_gym?: boolean; show_checkins?: boolean; show_goals?: boolean; training_mode?: string | null; updated_at?: string; username?: string | null };
+        Update: Partial<Database['public']['Tables']['profiles']['Insert']>;
         Relationships: [];
       };
       purchases: {
@@ -293,6 +293,12 @@ export type Database = {
           { foreignKeyName: 'review_reports_reporter_id_fkey'; columns: ['reporter_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
           { foreignKeyName: 'review_reports_review_id_fkey'; columns: ['review_id']; isOneToOne: false; referencedRelation: 'gym_reviews'; referencedColumns: ['id'] },
         ];
+      };
+      user_reports: {
+        Row: { created_at: string; id: string; reason: string | null; reported_id: string; reporter_id: string; workout_id: string | null };
+        Insert: { created_at?: string; id?: string; reason?: string | null; reported_id: string; reporter_id: string; workout_id?: string | null };
+        Update: Partial<Database['public']['Tables']['user_reports']['Insert']>;
+        Relationships: [];
       };
       saved_gyms: {
         Row: { created_at: string; gym_id: string; user_id: string };
@@ -341,6 +347,78 @@ export type Database = {
       };
       desk_stats: { Args: { p_gym_id: string }; Returns: Json };
       expire_passes: { Args: never; Returns: number };
+      follow: { Args: { p_follow: boolean; p_user: string }; Returns: undefined };
+      get_feed: {
+        Args: { p_before?: string; p_limit?: number };
+        Returns: {
+          at: string;
+          avatar_url: string;
+          display_name: string;
+          goal_kind: string;
+          goal_lift: string;
+          goal_target: number;
+          goal_unit: string;
+          gym_name: string;
+          gym_slug: string;
+          i_propped: boolean;
+          item_id: string;
+          item_type: string;
+          kind: string;
+          logged_on: string;
+          note: string;
+          props: number;
+          user_id: string;
+          username: string;
+        }[];
+      };
+      get_follow_list: {
+        Args: { p_followers: boolean; p_username: string };
+        Returns: { avatar_url: string; display_name: string; i_follow: boolean; id: string; username: string }[];
+      };
+      get_profile_by_username: {
+        Args: { p_today: string; p_username: string };
+        Returns: {
+          avatar_url: string;
+          bio: string;
+          display_name: string;
+          followers: number;
+          following: number;
+          follows_me: boolean;
+          goals: Json;
+          i_blocked: boolean;
+          i_follow: boolean;
+          id: string;
+          is_me: boolean;
+          partner_status: string;
+          show_checkins: boolean;
+          show_goals: boolean;
+          streak: number;
+          username: string;
+          workouts: Json;
+        }[];
+      };
+      my_partners: {
+        Args: { p_today: string };
+        Returns: {
+          avatar_url: string;
+          display_name: string;
+          id: string;
+          logged_today: boolean;
+          missed_yesterday: boolean;
+          status: string;
+          streak: number;
+          username: string;
+        }[];
+      };
+      nudge: { Args: { p_today: string; p_user: string }; Returns: undefined };
+      search_people: {
+        Args: { p_query: string };
+        Returns: { avatar_url: string; display_name: string; i_follow: boolean; id: string; username: string }[];
+      };
+      set_block: { Args: { p_block: boolean; p_user: string }; Returns: undefined };
+      set_partner: { Args: { p_action: string; p_user: string }; Returns: undefined };
+      take_nudges: { Args: never; Returns: { created_at: string; from_avatar: string; from_name: string; from_username: string }[] };
+      toggle_props: { Args: { p_goal?: string; p_workout?: string }; Returns: boolean };
       my_streak: { Args: { p_today: string }; Returns: number };
       fulfill_purchase: { Args: { p_purchase_id: string }; Returns: string };
       gym_reviews_for: {
