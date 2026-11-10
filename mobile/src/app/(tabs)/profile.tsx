@@ -5,6 +5,7 @@ import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/Avatar';
 import { GoalsCard } from '@/components/GoalsCard';
+import { PartnersCard, PublicProfileSettings, UsernameCard } from '@/components/Social';
 import { Button } from '@/components/Button';
 import { EmptyState, ScrollScreen } from '@/components/layout';
 import { Mark } from '@/components/Logo';
@@ -73,7 +74,7 @@ function IdentityCard() {
           {name}
         </T>
         <T v="callout" c="muted" numberOfLines={1}>
-          {session?.user.email}
+          {profile?.username ? `@${profile.username}` : session?.user.email}
         </T>
         <View style={styles.photoLinks}>
           <Press onPress={change} disabled={busy} haptic={false} accessibilityRole="button">
@@ -180,12 +181,16 @@ export default function Profile() {
       <ScrollScreen width={layout.form} gap={space.xxl}>
         <IdentityCard />
         <DeskLink />
+        <UsernameCard />
         <TodayCard />
         <GoalsCard />
 
         {/* Remount only when the saved name/city change, so other profile updates keep unsaved edits. */}
         <DetailsForm key={profile ? `${profile.display_name}|${profile.home_city}` : 'loading'} />
         <TrainingModeSetting />
+        {/* Remount when the saved bio changes so the field starts from it. */}
+        <PublicProfileSettings key={profile?.bio ?? ''} />
+        <PartnersCard />
 
         <Button label="Log out" variant="outline" icon={SignOut} onPress={auth.signOut} />
         <About />
