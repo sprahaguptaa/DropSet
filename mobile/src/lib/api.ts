@@ -3,6 +3,7 @@
 
 import type { Enums, Json, Tables } from './database.types';
 import { RADIUS_METERS } from './format';
+import type { WorkoutKind } from './workouts';
 import { supabase } from './supabase';
 
 export type PassType = Enums<'pass_type'>;
@@ -104,7 +105,7 @@ export async function getProfile(userId: string) {
 
 export async function updateProfile(
   userId: string,
-  patch: { display_name?: string; home_city?: string | null; avatar_url?: string | null },
+  patch: { display_name?: string; home_city?: string | null; avatar_url?: string | null; training_mode?: TrainingMode },
 ) {
   const { error } = await supabase.from('profiles').update(patch).eq('id', userId);
   fail(error);
@@ -203,6 +204,44 @@ export async function getPass(id: string): Promise<PassWithGym | null> {
   const { data, error } = await supabase.from('passes').select('*, gyms(name, slug, city)').eq('id', id).maybeSingle();
   fail(error);
   return data;
+}
+
+// ---------- daily check-in (workouts) ----------
+
+export type TrainingMode = 'daily' | 'traveler';
+export type Workout = Tables<'workouts'> & { gyms: { name: string; slug: string } | null };
+
+// One per day; the app always sends the person's local date (see localDate in format.ts).
+export async function getWorkouts(from: string, to: string): Promise<Workout[]> {
+  const { data, error } = await supabase
+    .from('workouts')
+    .select('*, gyms(name, slug)')
+    .gte('logged_on', from)
+    .lte('logged_on', to)
+    .order('logged_on');
+  fail(error);
+  return data ?? [];
+}
+
+export async function saveWorkout(
+  userId: string,
+  w: { logged_on: string; kind: WorkoutKind; gym_id: string | null; note: string | null },
+) {
+  const { error } = await supabase
+    .from('workouts')
+    .upsert({ user_id: userId, ...w, note: w.note?.trim() || null }, { onConflict: 'user_id,logged_on' });
+  fail(error);
+}
+
+export async function deleteWorkout(id: string) {
+  const { error } = await supabase.from('workouts').delete().eq('id', id);
+  fail(error);
+}
+
+export async function getStreak(today: string): Promise<number> {
+  const { data, error } = await supabase.rpc('my_streak', { p_today: today });
+  fail(error);
+  return data ?? 0;
 }
 
 // ---------- checkout + front desk ----------

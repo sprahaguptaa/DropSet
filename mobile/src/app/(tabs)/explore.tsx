@@ -12,6 +12,8 @@ import { DumbbellScore } from '@/components/Dumbbells';
 import { PriceTag } from '@/components/PriceTag';
 import { ScrollScreen, Section, useWide } from '@/components/layout';
 import { T } from '@/components/Text';
+import { TodayCard } from '@/components/TodayCard';
+import { TrainingModePrompt } from '@/components/TrainingMode';
 import { searchGyms, type GymResult } from '@/lib/api';
 import { greeting, miles } from '@/lib/format';
 import { currentPosition } from '@/lib/location';
@@ -83,6 +85,13 @@ export default function Explore() {
           </Press>
         ) : null}
       </View>
+
+      {auth.profile && auth.profile.training_mode !== 'traveler' && (
+        <View style={[styles.today, wide && styles.todayWide]}>
+          <TrainingModePrompt />
+          {auth.profile.training_mode === 'daily' && <TodayCard compact />}
+        </View>
+      )}
 
       <T v="title1" style={[styles.title, wide && styles.titleWide]}>
         {'Where are you\ntraining?'}
@@ -203,6 +212,8 @@ export default function Explore() {
 const styles = StyleSheet.create({
   flex: { flex: 1 },
   greetRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 40 },
+  today: { marginTop: space.l },
+  todayWide: { maxWidth: 720 },
   title: { marginTop: space.s, fontSize: 36, lineHeight: 38, letterSpacing: -1.2 },
   titleWide: { fontSize: 56, lineHeight: 56, letterSpacing: -2 },
   searchRow: { flexDirection: 'row', gap: space.m, marginTop: space.xl },

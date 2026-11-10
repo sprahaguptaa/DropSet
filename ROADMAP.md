@@ -30,6 +30,7 @@ free promotion for that gym and fresh, verified data for travelers.
 | Accounts | Supabase Auth (email), profile name + home city + photo, saved gyms |
 | Passes | Demo checkout (simulated payment) → ticket with QR + 8-character code → staff scan it at `/desk`, which starts the pass and logs the check-in. Passes tab groups Ready to use (newest tagged "New") / Active / Used; the ticket has a "My passes" button |
 | Front desk | `/desk` for `gym_staff`: scan (camera) or type a code, plus DropSet check-ins, visitors (new vs returning), passes sold and revenue for the last 30 days |
+| Daily check-in | "Do you train most days?" (`training_mode`), Today card on Explore for daily trainers and on Profile, log a day in two taps (`/log`), streak (`my_streak`, rest days count), this-week strip |
 | Platform | Expo app (web + Expo Go), deployed on Vercel, no `.env` needed, Supabase email links go to the live site |
 
 ## Decisions
@@ -68,7 +69,7 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 - **Done when**: searching any listed metro or its airport returns gyms nearest-first; "Near me" works in those cities.
 - Note: new cities arrive without prices ("Price not listed") until Phase 6.
 
-### Phase 2: Daily check-in (single-player) ⬜
+### Phase 2: Daily check-in (single-player) ✅ (2026-11-10)
 - Onboarding question after sign-up: **"Do you train most days?"** → `profiles.training_mode` = `daily` (app opens to Today) or `traveler` (opens to Explore). Changeable in Profile.
 - `workouts` table: id, user_id, `logged_on` (date, one per user per day), `kind` (lift / climb / class / cardio / sport / rest), optional `gym_id`, optional note, created_at. RLS: the owner can do anything; reads by others come in Phase 4.
 - "Log today" button (Explore header + Profile), streak (consecutive days, rest days count), this-week calendar on Profile. Streak computed in SQL (`my_streak()`).
