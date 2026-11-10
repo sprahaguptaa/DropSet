@@ -31,6 +31,7 @@ free promotion for that gym and fresh, verified data for travelers.
 | Passes | Demo checkout (simulated payment) → ticket with QR + 8-character code → staff scan it at `/desk`, which starts the pass and logs the check-in. Passes tab groups Ready to use (newest tagged "New") / Active / Used; the ticket has a "My passes" button |
 | Front desk | `/desk` for `gym_staff`: scan (camera) or type a code, plus DropSet check-ins, visitors (new vs returning), passes sold and revenue for the last 30 days |
 | Daily check-in | "Do you train most days?" (`training_mode`), Today card on Explore for daily trainers and on Profile, log a day in two taps (`/log`), streak (`my_streak`, rest days count), this-week strip |
+| Goals | Bodyweight, lift (squat / bench / deadlift / press) and climbing-grade goals on `/goals` and a Profile card; log progress there or from the daily log; the database marks "Goal hit" |
 | Platform | Expo app (web + Expo Go), deployed on Vercel, no `.env` needed, Supabase email links go to the live site |
 
 ## Decisions
@@ -75,7 +76,7 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 - "Log today" button (Explore header + Profile), streak (consecutive days, rest days count), this-week calendar on Profile. Streak computed in SQL (`my_streak()`).
 - **Done when**: a user logs a day in two taps, sees their streak and week, and can edit or delete today's entry.
 
-### Phase 3: Goals ⬜
+### Phase 3: Goals ✅ (2026-11-10)
 - `goals` table: id, user_id, `kind` (bodyweight / lift / climb_grade), `lift` (squat / bench / deadlift / press, for lift goals), `target_value`, unit (lb/kg, V-grade), achieved_at. `goal_entries`: goal_id, value, logged_on, optional workout_id.
 - Goals section on Profile with progress toward each target; log a new PR from the daily check-in.
 - **Done when**: a user sets "Deadlift 405 lb", logs entries over time, sees progress, and gets a "Goal hit" moment when they reach it.

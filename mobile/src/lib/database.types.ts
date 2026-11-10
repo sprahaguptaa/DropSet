@@ -32,6 +32,35 @@ export type Database = {
           { foreignKeyName: 'check_ins_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
         ];
       };
+      goal_entries: {
+        Row: { created_at: string; goal_id: string; id: string; logged_on: string; user_id: string; value: number; workout_id: string | null };
+        Insert: { created_at?: string; goal_id: string; id?: string; logged_on: string; user_id: string; value: number; workout_id?: string | null };
+        Update: Partial<Database['public']['Tables']['goal_entries']['Insert']>;
+        Relationships: [
+          { foreignKeyName: 'goal_entries_goal_id_fkey'; columns: ['goal_id']; isOneToOne: false; referencedRelation: 'goals'; referencedColumns: ['id'] },
+          { foreignKeyName: 'goal_entries_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+          { foreignKeyName: 'goal_entries_workout_id_fkey'; columns: ['workout_id']; isOneToOne: false; referencedRelation: 'workouts'; referencedColumns: ['id'] },
+        ];
+      };
+      goals: {
+        Row: {
+          achieved_at: string | null;
+          created_at: string;
+          id: string;
+          kind: string;
+          lift: string | null;
+          start_value: number;
+          target_value: number;
+          unit: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: { kind: string; lift?: string | null; start_value: number; target_value: number; unit: string; user_id: string };
+        Update: { [_ in never]: never }; // goals aren't edited after they're set
+        Relationships: [
+          { foreignKeyName: 'goals_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+        ];
+      };
       gym_amenities: {
         Row: { amenity_id: number; gym_id: string };
         Insert: { amenity_id: number; gym_id: string };

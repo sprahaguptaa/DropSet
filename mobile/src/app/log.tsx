@@ -1,4 +1,4 @@
-import { Redirect } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 
@@ -8,8 +8,9 @@ import { back, ScreenHeader, ScrollScreen } from '@/components/layout';
 import { Press } from '@/components/Press';
 import { T } from '@/components/Text';
 import { TextField } from '@/components/TextField';
-import { deleteWorkout, getPasses, getSavedGyms, getWorkouts, saveWorkout, type Workout } from '@/lib/api';
+import { addGoalEntry, deleteWorkout, getGoals, getPasses, getSavedGyms, getWorkouts, saveWorkout, type Goal, type Workout } from '@/lib/api';
 import { localDate, shortDate } from '@/lib/format';
+import { entryError, goalSubject, parseValue, valueError } from '@/lib/goals';
 import { WORKOUT_KINDS, type WorkoutKind } from '@/lib/workouts';
 import { useAuth } from '@/providers/AuthProvider';
 import { color, font, layout, radius, space } from '@/theme/tokens';
@@ -26,31 +27,77 @@ async function gymOptions(): Promise<GymOption[]> {
   return all.filter((g, i) => all.findIndex((x) => x.id === g.id) === i).slice(0, 8);
 }
 
-function LogForm({ userId, today, existing, gyms }: { userId: string; today: string; existing: Workout | null; gyms: GymOption[] }) {
+// Open goals worth a number today: lift goals on a lift day, climbing on a climb day, bodyweight any day.
+function goalsFor(kind: WorkoutKind | null, goals: Goal[]) {
+  if (!kind) return [];
+  return goals.filter((g) => !g.achieved_at && (g.kind === 'bodyweight' || (g.kind === 'lift' && kind === 'lift') || (g.kind === 'climb' && kind === 'climb')));
+}
+
+function progressLabel(g: Goal) {
+  if (g.kind === 'bodyweight') return `Weigh-in (${g.unit})`;
+  if (g.kind === 'climb') return 'Top grade today (V)';
+  return `${goalSubject(g)} best today (${g.unit})`;
+}
+
+function LogForm({
+  userId,
+  today,
+  existing,
+  gyms,
+  goals,
+}: {
+  userId: string;
+  today: string;
+  existing: Workout | null;
+  gyms: GymOption[];
+  goals: Goal[];
+}) {
   const [kind, setKind] = useState<WorkoutKind | null>((existing?.kind as WorkoutKind) ?? null);
   const [gymId, setGymId] = useState<string | null>(existing?.gym_id ?? null);
   const [note, setNote] = useState(existing?.note ?? '');
   const [saving, setSaving] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [progress, setProgress] = useState<Record<string, string>>({});
+  const tracked = goalsFor(kind, goals);
+  const values = tracked.map((g) => ({ g, value: parseValue(progress[g.id] ?? '', g.unit) }));
+  const badValue = tracked.some((g) => valueError(progress[g.id] ?? '', g.unit) != null);
   // A gym from an older log that's no longer saved still shows as an option.
   const options = existing?.gym_id && existing.gyms && !gyms.some((g) => g.id === existing.gym_id)
     ? [{ id: existing.gym_id, name: existing.gyms.name }, ...gyms]
     : gyms;
 
-  async function run(task: () => Promise<void>) {
+  // task returns the id of a goal it hit, if any: then the Goals page opens to celebrate it.
+  async function run(task: () => Promise<string | null | void>) {
     setSaving(true);
     setError(null);
     try {
-      await task();
-      back();
-    } catch {
-      setError('Couldn’t save. Check your connection and try again.');
+      const hit = await task();
+      if (hit) router.replace({ pathname: '/goals', params: { hit } });
+      else back();
+    } catch (e) {
+      setError((e as { friendly?: string }).friendly ?? 'Couldn’t save. Check your connection and try again.');
       setSaving(false);
     }
   }
 
-  const save = () => run(() => saveWorkout(userId, { logged_on: today, kind: kind!, gym_id: kind === 'rest' ? null : gymId, note }));
+  const save = () =>
+    run(async () => {
+      const workoutId = await saveWorkout(userId, { logged_on: today, kind: kind!, gym_id: kind === 'rest' ? null : gymId, note });
+      // Each entry that saves is cleared from the form, so "Try again" after a failure only sends the rest.
+      let hit: string | null = null;
+      for (const { g, value } of values) {
+        if (value == null) continue;
+        try {
+          const r = await addGoalEntry(userId, g.id, value, today, workoutId);
+          if (r.hit) hit = g.id;
+          setProgress((p) => ({ ...p, [g.id]: '' }));
+        } catch (e) {
+          throw { friendly: `${goalSubject(g)}: ${entryError(e)}` };
+        }
+      }
+      return hit;
+    });
   const remove = () => (confirmDelete ? run(() => deleteWorkout(existing!.id)) : setConfirmDelete(true));
 
   return (
@@ -94,6 +141,26 @@ function LogForm({ userId, today, existing, gyms }: { userId: string; today: str
         </View>
       )}
 
+      {tracked.length > 0 && (
+        <View style={styles.block}>
+          <T v="title3">Progress</T>
+          {tracked.map((g) => (
+            <TextField
+              key={g.id}
+              label={progressLabel(g)}
+              value={progress[g.id] ?? ''}
+              onChangeText={(t) => setProgress((p) => ({ ...p, [g.id]: t }))}
+              keyboardType="decimal-pad"
+              placeholder="Optional"
+              error={valueError(progress[g.id] ?? '', g.unit)}
+            />
+          ))}
+          <T v="footnote" c="muted">
+            Logs toward your goals. Leave blank to skip.
+          </T>
+        </View>
+      )}
+
       <TextField label="Note (optional)" value={note} onChangeText={setNote} placeholder="Squats 5×5, felt strong" maxLength={140} />
 
       {error && (
@@ -101,7 +168,7 @@ function LogForm({ userId, today, existing, gyms }: { userId: string; today: str
           {error}
         </T>
       )}
-      <Button label={existing ? 'Save changes' : 'Log it'} onPress={save} loading={saving} disabled={!kind} />
+      <Button label={existing ? 'Save changes' : 'Log it'} onPress={save} loading={saving} disabled={!kind || badValue} />
       {existing && (
         <Press onPress={remove} disabled={saving} haptic={false} accessibilityRole="button" style={styles.delete}>
           <T v="callout" c="danger" style={styles.bold}>
@@ -119,14 +186,14 @@ export default function LogToday() {
   const userId = session?.user.id ?? null;
   const [today] = useState(() => localDate());
   // failed: today's entry couldn't be read. Never show an empty form then, or saving would overwrite it.
-  const [loaded, setLoaded] = useState<{ userId: string; existing: Workout | null; gyms: GymOption[]; failed: boolean } | null>(null);
+  const [loaded, setLoaded] = useState<{ userId: string; existing: Workout | null; gyms: GymOption[]; goals: Goal[]; failed: boolean } | null>(null);
   const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!userId) return;
-    Promise.all([getWorkouts(today, today), gymOptions().catch(() => [])])
-      .then(([w, gyms]) => setLoaded({ userId, existing: w[0] ?? null, gyms, failed: false }))
-      .catch(() => setLoaded({ userId, existing: null, gyms: [], failed: true }));
+    Promise.all([getWorkouts(today, today), gymOptions().catch(() => []), getGoals().catch(() => [])])
+      .then(([w, gyms, goals]) => setLoaded({ userId, existing: w[0] ?? null, gyms, goals, failed: false }))
+      .catch(() => setLoaded({ userId, existing: null, gyms: [], goals: [], failed: true }));
   }, [userId, today, attempt]);
 
   if (ready && !session) return <Redirect href={{ pathname: '/login', params: { next: '/log' } }} />;
@@ -146,7 +213,7 @@ export default function LogToday() {
         </ScrollScreen>
       ) : (
         <ScrollScreen width={layout.form} gap={space.xxl}>
-          <LogForm key={current.existing?.id ?? 'new'} userId={userId} today={today} existing={current.existing} gyms={current.gyms} />
+          <LogForm key={current.existing?.id ?? 'new'} userId={userId} today={today} existing={current.existing} gyms={current.gyms} goals={current.goals} />
         </ScrollScreen>
       )}
     </KeyboardAvoidingView>

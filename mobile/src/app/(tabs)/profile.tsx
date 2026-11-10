@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { Avatar } from '@/components/Avatar';
+import { GoalsCard } from '@/components/GoalsCard';
 import { Button } from '@/components/Button';
 import { EmptyState, ScrollScreen } from '@/components/layout';
 import { Mark } from '@/components/Logo';
@@ -180,6 +181,7 @@ export default function Profile() {
         <IdentityCard />
         <DeskLink />
         <TodayCard />
+        <GoalsCard />
 
         {/* Remount only when the saved name/city change, so other profile updates keep unsaved edits. */}
         <DetailsForm key={profile ? `${profile.display_name}|${profile.home_city}` : 'loading'} />
