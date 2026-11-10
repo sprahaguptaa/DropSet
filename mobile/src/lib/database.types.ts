@@ -215,9 +215,9 @@ export type Database = {
         ];
       };
       profiles: {
-        Row: { avatar_url: string | null; created_at: string; display_name: string | null; home_city: string | null; id: string; updated_at: string };
-        Insert: { avatar_url?: string | null; created_at?: string; display_name?: string | null; home_city?: string | null; id: string; updated_at?: string };
-        Update: { avatar_url?: string | null; created_at?: string; display_name?: string | null; home_city?: string | null; id?: string; updated_at?: string };
+        Row: { avatar_url: string | null; created_at: string; display_name: string | null; home_city: string | null; id: string; training_mode: string | null; updated_at: string };
+        Insert: { avatar_url?: string | null; created_at?: string; display_name?: string | null; home_city?: string | null; id: string; training_mode?: string | null; updated_at?: string };
+        Update: { avatar_url?: string | null; created_at?: string; display_name?: string | null; home_city?: string | null; id?: string; training_mode?: string | null; updated_at?: string };
         Relationships: [];
       };
       purchases: {
@@ -274,6 +274,15 @@ export type Database = {
           { foreignKeyName: 'saved_gyms_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
         ];
       };
+      workouts: {
+        Row: { created_at: string; gym_id: string | null; id: string; kind: string; logged_on: string; note: string | null; updated_at: string; user_id: string };
+        Insert: { created_at?: string; gym_id?: string | null; id?: string; kind: string; logged_on: string; note?: string | null; updated_at?: string; user_id: string };
+        Update: Partial<Database['public']['Tables']['workouts']['Insert']>;
+        Relationships: [
+          { foreignKeyName: 'workouts_gym_id_fkey'; columns: ['gym_id']; isOneToOne: false; referencedRelation: 'gyms'; referencedColumns: ['id'] },
+          { foreignKeyName: 'workouts_user_id_fkey'; columns: ['user_id']; isOneToOne: false; referencedRelation: 'profiles'; referencedColumns: ['id'] },
+        ];
+      };
       training_styles: {
         Row: { id: number; name: string; slug: string };
         Insert: { id?: never; name: string; slug: string };
@@ -303,6 +312,7 @@ export type Database = {
       };
       desk_stats: { Args: { p_gym_id: string }; Returns: Json };
       expire_passes: { Args: never; Returns: number };
+      my_streak: { Args: { p_today: string }; Returns: number };
       fulfill_purchase: { Args: { p_purchase_id: string }; Returns: string };
       gym_reviews_for: {
         Args: { p_gym_id: string };

@@ -85,6 +85,7 @@ export default function RootLayout() {
             <Stack.Screen name="index" options={{ contentStyle: { backgroundColor: color.ink }, animation: 'fade' }} />
             <Stack.Screen name="(tabs)" options={{ animation: 'fade' }} />
             <Stack.Screen name="search" options={{ presentation: 'modal' }} />
+            <Stack.Screen name="log" options={{ presentation: 'modal' }} />
           </Stack>
           <StatusBar style="dark" />
         </SavedProvider>

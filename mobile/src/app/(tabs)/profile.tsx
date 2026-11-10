@@ -11,6 +11,8 @@ import { Press } from '@/components/Press';
 import { TabTitle } from '@/components/TabScreen';
 import { T } from '@/components/Text';
 import { TextField } from '@/components/TextField';
+import { TodayCard } from '@/components/TodayCard';
+import { TrainingModeSetting } from '@/components/TrainingMode';
 import { removeAvatar, updateProfile, uploadAvatar } from '@/lib/api';
 import { pickAvatar } from '@/lib/photo-picker';
 import { useStaffGyms } from '@/lib/use-staff-gyms';
@@ -114,7 +116,7 @@ function DeskLink() {
   );
 }
 
-// Starts from the saved profile; remounted (via key) whenever the saved profile changes.
+// Starts from the saved profile; remounted (via key) when the saved name or city changes.
 function DetailsForm() {
   const auth = useAuth();
   const { session, profile } = auth;
@@ -177,8 +179,11 @@ export default function Profile() {
       <ScrollScreen width={layout.form} gap={space.xxl}>
         <IdentityCard />
         <DeskLink />
+        <TodayCard />
 
-        <DetailsForm key={profile?.updated_at ?? 'loading'} />
+        {/* Remount only when the saved name/city change, so other profile updates keep unsaved edits. */}
+        <DetailsForm key={profile ? `${profile.display_name}|${profile.home_city}` : 'loading'} />
+        <TrainingModeSetting />
 
         <Button label="Log out" variant="outline" icon={SignOut} onPress={auth.signOut} />
         <About />

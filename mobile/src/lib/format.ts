@@ -62,6 +62,24 @@ export function shortDate(iso: string) {
   return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
+// The person's own calendar day as YYYY-MM-DD (daily logs are per local day, not UTC).
+export function localDate(d = new Date()) {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+}
+
+// Monday..Sunday of the week containing `day` (YYYY-MM-DD).
+export function weekDates(day: string) {
+  const [y, m, d] = day.split('-').map(Number);
+  const date = new Date(y, m - 1, d);
+  const monday = new Date(y, m - 1, d - ((date.getDay() + 6) % 7));
+  return Array.from({ length: 7 }, (_, i) => localDate(new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i)));
+}
+
+export function streakLabel(days: number) {
+  return days ? `${days} day${days === 1 ? '' : 's'} strong` : 'Log today to start a streak';
+}
+
 export function clockTime(iso: string) {
   return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 }
