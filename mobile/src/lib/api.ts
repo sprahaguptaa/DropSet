@@ -3,6 +3,7 @@
 
 import type { Enums, Json, Tables } from './database.types';
 import { RADIUS_METERS } from './format';
+import type { GoalKind, Lift } from './goals';
 import type { WorkoutKind } from './workouts';
 import { supabase } from './supabase';
 
@@ -223,14 +224,18 @@ export async function getWorkouts(from: string, to: string): Promise<Workout[]> 
   return data ?? [];
 }
 
+// Returns the workout id, so a PR logged with it can point back to the day.
 export async function saveWorkout(
   userId: string,
   w: { logged_on: string; kind: WorkoutKind; gym_id: string | null; note: string | null },
-) {
-  const { error } = await supabase
+): Promise<string> {
+  const { data, error } = await supabase
     .from('workouts')
-    .upsert({ user_id: userId, ...w, note: w.note?.trim() || null }, { onConflict: 'user_id,logged_on' });
+    .upsert({ user_id: userId, ...w, note: w.note?.trim() || null }, { onConflict: 'user_id,logged_on' })
+    .select('id')
+    .single();
   fail(error);
+  return data!.id;
 }
 
 export async function deleteWorkout(id: string) {
@@ -242,6 +247,47 @@ export async function getStreak(today: string): Promise<number> {
   const { data, error } = await supabase.rpc('my_streak', { p_today: today });
   fail(error);
   return data ?? 0;
+}
+
+// ---------- goals ----------
+
+export type GoalEntry = Tables<'goal_entries'>;
+export type Goal = Tables<'goals'> & { goal_entries: GoalEntry[] };
+
+export async function getGoals(): Promise<Goal[]> {
+  const { data, error } = await supabase.from('goals').select('*, goal_entries(*)').order('created_at', { ascending: false });
+  fail(error);
+  return data ?? [];
+}
+
+export async function createGoal(
+  userId: string,
+  g: { kind: GoalKind; lift: Lift | null; unit: string; start_value: number; target_value: number },
+) {
+  const { error } = await supabase.from('goals').insert({ user_id: userId, ...g });
+  fail(error);
+}
+
+export async function deleteGoal(id: string) {
+  const { error } = await supabase.from('goals').delete().eq('id', id);
+  fail(error);
+}
+
+// The database decides whether this entry hit the goal (achieved_at); this reports it back.
+export async function addGoalEntry(userId: string, goalId: string, value: number, loggedOn: string, workoutId: string | null = null) {
+  const { error } = await supabase
+    .from('goal_entries')
+    .insert({ goal_id: goalId, user_id: userId, value, logged_on: loggedOn, workout_id: workoutId });
+  fail(error);
+  // The entry is saved at this point; if reading the result fails, report "no hit" rather than an
+  // error, so a retry doesn't log the same entry twice.
+  const { data } = await supabase.from('goals').select('achieved_at').eq('id', goalId).maybeSingle();
+  return { hit: !!data?.achieved_at };
+}
+
+export async function deleteGoalEntry(id: string) {
+  const { error } = await supabase.from('goal_entries').delete().eq('id', id);
+  fail(error);
 }
 
 // ---------- checkout + front desk ----------
