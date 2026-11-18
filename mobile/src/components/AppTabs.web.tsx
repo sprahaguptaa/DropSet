@@ -1,6 +1,6 @@
 import { router } from 'expo-router';
 import { TabList, TabSlot, TabTrigger, Tabs, type TabTriggerSlotProps } from 'expo-router/ui';
-import { Heart, MagnifyingGlass, Ticket, UserCircle, type Icon } from 'phosphor-react-native';
+import { Heart, MagnifyingGlass, Ticket, UserCircle, UsersThree, type Icon } from 'phosphor-react-native';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -14,6 +14,7 @@ import { T } from './Text';
 
 const TABS = [
   { name: 'explore', href: '/explore', label: 'Explore', icon: MagnifyingGlass },
+  { name: 'feed', href: '/feed', label: 'Feed', icon: UsersThree },
   { name: 'saved', href: '/saved', label: 'Saved', icon: Heart },
   { name: 'passes', href: '/passes', label: 'Passes', icon: Ticket },
   { name: 'profile', href: '/profile', label: 'Profile', icon: UserCircle },

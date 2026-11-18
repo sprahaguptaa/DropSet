@@ -80,6 +80,15 @@ export function streakLabel(days: number) {
   return days ? `${days} day${days === 1 ? '' : 's'} strong` : 'Log today to start a streak';
 }
 
+// Feed timestamps: "just now", "12m", "3h", then "Nov 8".
+export function ago(iso: string, now = Date.now()) {
+  const mins = Math.floor((now - new Date(iso).getTime()) / 6e4);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m`;
+  if (mins < 24 * 60) return `${Math.floor(mins / 60)}h`;
+  return shortDate(iso);
+}
+
 export function clockTime(iso: string) {
   return new Date(iso).toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' });
 }
