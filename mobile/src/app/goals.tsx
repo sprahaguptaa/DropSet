@@ -23,6 +23,7 @@ import {
   goalTitle,
   LIFTS,
   parseValue,
+  typedUnit,
   valueError,
   type GoalKind,
   type Lift,
@@ -157,11 +158,11 @@ function GoalCard({ goal, userId, onChanged, onHit }: { goal: Goal; userId: stri
         <View style={styles.logRow}>
           <View style={styles.flex}>
             <TextField
-              label={goal.kind === 'bodyweight' ? 'Today’s weigh-in' : goal.kind === 'climb' ? 'Top grade today' : 'New best'}
+              label={goal.kind === 'bodyweight' ? `Today’s weigh-in (${goal.unit})` : goal.kind === 'climb' ? 'Top grade today (V)' : `New best (${goal.unit})`}
               value={text}
               onChangeText={setText}
               keyboardType="decimal-pad"
-              placeholder={goal.unit === 'v' ? 'e.g. 5' : `in ${goal.unit}`}
+              placeholder={goal.unit === 'v' ? 'e.g. 5' : 'e.g. 185'}
               autoFocus
               error={valueError(text, goal.unit)}
               onSubmitEditing={() => value != null && log()}
@@ -216,6 +217,12 @@ function NewGoal({ userId, onDone, onCancel }: { userId: string; onDone: () => v
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const u = kind === 'climb' ? 'v' : unit;
+  // Typing "90 kg" (or "200 lb") picks that unit, so the number and the unit can't disagree.
+  const typeValue = (set: (t: string) => void) => (text: string) => {
+    set(text);
+    const typed = typedUnit(text);
+    if (typed && kind !== 'climb') setUnit(typed);
+  };
   const s = parseValue(start, u);
   const t = parseValue(target, u);
   const problem =
@@ -262,25 +269,37 @@ function NewGoal({ userId, onDone, onCancel }: { userId: string; onDone: () => v
         </View>
       )}
       {kind !== 'climb' && (
-        <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel="Unit">
-          {(['lb', 'kg'] as const).map((x) => (
-            <Chip key={x} label={x} role="radio" selected={unit === x} onPress={() => setUnit(x)} />
-          ))}
+        <View style={styles.unitRow}>
+          <T v="footnote" c="ink2" style={styles.semibold}>
+            Units
+          </T>
+          <View style={styles.chips} accessibilityRole="radiogroup" accessibilityLabel="Units">
+            {(['lb', 'kg'] as const).map((x) => (
+              <Chip key={x} label={x} role="radio" selected={unit === x} onPress={() => setUnit(x)} />
+            ))}
+          </View>
         </View>
       )}
       <View style={styles.pair}>
         <View style={styles.flex}>
           <TextField
-            label={kind === 'climb' ? 'Top grade now' : kind === 'bodyweight' ? 'Weight now' : 'Best now'}
+            label={`${kind === 'climb' ? 'Top grade now' : kind === 'bodyweight' ? 'Weight now' : 'Best now'} (${u === 'v' ? 'V' : u})`}
             value={start}
-            onChangeText={setStart}
+            onChangeText={typeValue(setStart)}
             keyboardType="decimal-pad"
-            placeholder={u === 'v' ? 'V3' : u}
+            placeholder={u === 'v' ? 'e.g. 3' : kind === 'bodyweight' ? 'e.g. 200' : 'e.g. 315'}
             error={valueError(start, u)}
           />
         </View>
         <View style={styles.flex}>
-          <TextField label="Target" value={target} onChangeText={setTarget} keyboardType="decimal-pad" placeholder={u === 'v' ? 'V6' : u} error={valueError(target, u)} />
+          <TextField
+            label={`Target (${u === 'v' ? 'V' : u})`}
+            value={target}
+            onChangeText={typeValue(setTarget)}
+            keyboardType="decimal-pad"
+            placeholder={u === 'v' ? 'e.g. 6' : kind === 'bodyweight' ? 'e.g. 185' : 'e.g. 405'}
+            error={valueError(target, u)}
+          />
         </View>
       </View>
       {(problem || error) && (
@@ -406,6 +425,8 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: space.m },
   deleteGoal: { paddingVertical: space.s },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: space.s },
+  unitRow: { gap: 6 },
+  semibold: { fontFamily: font.semibold },
   pair: { flexDirection: 'row', gap: space.m },
   hitWrap: { position: 'absolute', left: 0, right: 0, alignItems: 'center', paddingHorizontal: layout.gutter },
   hit: {
