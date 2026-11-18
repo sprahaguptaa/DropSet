@@ -18,22 +18,43 @@ import { kindOf } from '@/lib/workouts';
 import { useAuth } from '@/providers/AuthProvider';
 import { color, font, layout, radius, shadow, space } from '@/theme/tokens';
 
-function FeedCard({ item, mine, now, userId }: { item: FeedItem; mine: boolean; now: number; userId: string }) {
-  const [propped, setPropped] = useState(item.i_propped);
-  const [count, setCount] = useState(item.props);
+const keyOf = (i: FeedItem) => `${i.item_type}:${i.item_id}`;
+
+// A fresh first page merged into what's loaded: new posts go on top, known ones get fresh counts,
+// and older pages stay (so coming back to the Feed keeps your place).
+function mergeFirstPage(prev: FeedItem[], fresh: FeedItem[]) {
+  const freshKeys = new Set(fresh.map(keyOf));
+  const oldest = fresh[fresh.length - 1]?.at;
+  return [...fresh, ...prev.filter((i) => !freshKeys.has(keyOf(i)) && (!oldest || i.at < oldest))];
+}
+
+function FeedCard({
+  item,
+  mine,
+  now,
+  userId,
+  onProps,
+}: {
+  item: FeedItem;
+  mine: boolean;
+  now: number;
+  userId: string;
+  onProps: (key: string, on: boolean) => void;
+}) {
   const [busy, setBusy] = useState(false);
-  const [report, setReport] = useState<'idle' | 'confirm' | 'done'>('idle');
+  const [propsError, setPropsError] = useState(false);
+  const [report, setReport] = useState<'idle' | 'confirm' | 'sending' | 'done'>('idle');
   const name = displayName(item);
   const k = item.kind ? kindOf(item.kind) : null;
+  const what = item.item_type === 'goal_hit' ? 'goal hit' : 'check-in';
 
   async function props() {
     setBusy(true);
+    setPropsError(false);
     try {
-      const on = await toggleProps(item);
-      setPropped(on);
-      setCount((c) => c + (on ? 1 : -1));
+      onProps(keyOf(item), await toggleProps(item));
     } catch {
-      // e.g. they just made check-ins private; leave it as it was
+      setPropsError(true); // e.g. they just made check-ins private
     } finally {
       setBusy(false);
     }
@@ -41,6 +62,7 @@ function FeedCard({ item, mine, now, userId }: { item: FeedItem; mine: boolean; 
 
   async function onReport() {
     if (report === 'idle') return setReport('confirm');
+    setReport('sending');
     try {
       await reportUser(userId, item.user_id, item.item_type === 'workout' ? item.item_id : null);
       setReport('done');
@@ -97,7 +119,7 @@ function FeedCard({ item, mine, now, userId }: { item: FeedItem; mine: boolean; 
       <View style={styles.foot}>
         {mine ? (
           <T v="footnote" c="muted">
-            {count ? `${count} prop${count === 1 ? '' : 's'}` : ' '}
+            {item.props ? `${item.props} prop${item.props === 1 ? '' : 's'}` : ' '}
           </T>
         ) : (
           <Press
@@ -106,23 +128,34 @@ function FeedCard({ item, mine, now, userId }: { item: FeedItem; mine: boolean; 
             haptic
             scaleTo={0.9}
             accessibilityRole="button"
-            accessibilityState={{ selected: propped }}
-            accessibilityLabel={propped ? 'Remove props' : 'Give props'}
-            style={[styles.props, propped && styles.propsOn]}>
-            <HandsClapping size={18} color={propped ? color.cobalt : color.ink2} weight={propped ? 'fill' : 'regular'} />
-            <T v="footnote" c={propped ? 'cobalt' : 'ink2'} style={styles.bold}>
-              {count ? `Props · ${count}` : 'Props'}
+            accessibilityState={{ selected: item.i_propped, busy }}
+            accessibilityLabel={`Props, ${item.props}`}
+            style={[styles.props, item.i_propped && styles.propsOn]}>
+            <HandsClapping size={18} color={item.i_propped ? color.cobalt : color.ink2} weight={item.i_propped ? 'fill' : 'regular'} />
+            <T v="footnote" c={item.i_propped ? 'cobalt' : 'ink2'} style={styles.bold}>
+              {item.props ? `Props · ${item.props}` : 'Props'}
             </T>
           </Press>
         )}
         {!mine && (
-          <Press onPress={onReport} disabled={report === 'done'} haptic={false} hitSlop={8} accessibilityRole="button">
+          <Press
+            onPress={onReport}
+            disabled={report === 'sending' || report === 'done'}
+            haptic={false}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={report === 'confirm' ? `Confirm report of ${name}’s ${what}` : `Report ${name}’s ${what}`}>
             <T v="footnote" c={report === 'confirm' ? 'danger' : 'muted'}>
-              {report === 'done' ? 'Reported. Thanks.' : report === 'confirm' ? 'Tap again to report' : 'Report'}
+              {report === 'done' ? 'Reported. Thanks.' : report === 'confirm' || report === 'sending' ? 'Tap again to report' : 'Report'}
             </T>
           </Press>
         )}
       </View>
+      {propsError && (
+        <T v="footnote" c="danger">
+          Couldn’t give props right now.
+        </T>
+      )}
     </View>
   );
 }
@@ -136,31 +169,50 @@ export default function Feed() {
   const [failed, setFailed] = useState(false);
   const [loadingMore, setLoadingMore] = useState(false);
 
-  useFocusEffect(
-    useCallback(() => {
-      if (!userId) return;
-      getFeed()
-        .then((items) => {
-          setFailed(false);
-          setLoaded({ userId, items, now: Date.now(), more: items.length === FEED_PAGE });
-        })
-        .catch(() => setFailed(true));
-    }, [userId]),
-  );
+  const load = useCallback(() => {
+    if (!userId) return;
+    setFailed(false);
+    getFeed()
+      .then((fresh) =>
+        setLoaded((prev) =>
+          prev?.userId === userId
+            ? { ...prev, items: mergeFirstPage(prev.items, fresh), now: Date.now() }
+            : { userId, items: fresh, now: Date.now(), more: fresh.length === FEED_PAGE },
+        ),
+      )
+      .catch(() => setFailed(true));
+  }, [userId]);
+
+  useFocusEffect(load);
 
   const current = loaded?.userId === userId ? loaded : null;
 
   async function loadMore() {
-    if (!current || !current.more || loadingMore) return;
+    if (!current || !current.more || loadingMore || !current.items.length) return;
+    const cursor = current.items[current.items.length - 1].at;
     setLoadingMore(true);
     try {
-      const next = await getFeed(current.items[current.items.length - 1].at);
-      setLoaded({ ...current, items: [...current.items, ...next], more: next.length === FEED_PAGE });
+      const next = await getFeed(cursor);
+      // Append only if nothing reloaded underneath this request.
+      setLoaded((prev) =>
+        prev && prev.userId === userId && prev.items[prev.items.length - 1]?.at === cursor
+          ? { ...prev, items: [...prev.items, ...next.filter((n) => !prev.items.some((i) => keyOf(i) === keyOf(n)))], more: next.length === FEED_PAGE }
+          : prev,
+      );
     } catch {
       // try again on the next scroll
     } finally {
       setLoadingMore(false);
     }
+  }
+
+  function onProps(key: string, on: boolean) {
+    setLoaded((prev) =>
+      prev && {
+        ...prev,
+        items: prev.items.map((i) => (keyOf(i) === key && i.i_propped !== on ? { ...i, i_propped: on, props: i.props + (on ? 1 : -1) } : i)),
+      },
+    );
   }
 
   const header = (
@@ -180,15 +232,15 @@ export default function Feed() {
         <EmptyState icon={SignIn} title="Train together" body="Log in to follow friends and see their check-ins." action="Log in" onAction={() => router.push('/login')} />
       ) : !current ? (
         failed ? (
-          <EmptyState icon={UsersThree} title="Couldn’t load your feed" body="Check your connection and try again." />
+          <EmptyState icon={UsersThree} title="Couldn’t load your feed" body="Check your connection and try again." action="Try again" onAction={load} />
         ) : (
           <ActivityIndicator color={color.ink} style={{ marginTop: space.huge }} />
         )
       ) : (
         <FlatList
           data={current.items}
-          keyExtractor={(i) => `${i.item_type}:${i.item_id}`}
-          renderItem={({ item }) => <FeedCard item={item} mine={item.user_id === userId} now={current.now} userId={userId!} />}
+          keyExtractor={keyOf}
+          renderItem={({ item }) => <FeedCard item={item} mine={item.user_id === userId} now={current.now} userId={userId!} onProps={onProps} />}
           ListHeaderComponent={header}
           ItemSeparatorComponent={() => <View style={{ height: space.m }} />}
           onEndReached={loadMore}
@@ -199,9 +251,13 @@ export default function Feed() {
             <EmptyState
               icon={UsersThree}
               title="Your feed is quiet"
-              body="Follow friends to see their check-ins and goal hits here. Your own show up too."
-              action="Find people"
-              onAction={() => router.push('/people')}
+              body={
+                profile?.username
+                  ? 'Follow friends to see their check-ins and goal hits here. Your own show up too.'
+                  : 'Pick a username above, then follow friends to see their check-ins here.'
+              }
+              action={profile?.username ? 'Find people' : undefined}
+              onAction={profile?.username ? () => router.push('/people') : undefined}
             />
           }
         />

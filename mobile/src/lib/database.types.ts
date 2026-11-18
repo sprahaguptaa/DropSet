@@ -418,7 +418,7 @@ export type Database = {
       set_block: { Args: { p_block: boolean; p_user: string }; Returns: undefined };
       set_partner: { Args: { p_action: string; p_user: string }; Returns: undefined };
       take_nudges: { Args: never; Returns: { created_at: string; from_avatar: string; from_name: string; from_username: string }[] };
-      toggle_props: { Args: { p_goal?: string; p_workout?: string }; Returns: boolean };
+      toggle_props: { Args: { p_goal: string | null; p_workout: string | null }; Returns: boolean };
       my_streak: { Args: { p_today: string }; Returns: number };
       fulfill_purchase: { Args: { p_purchase_id: string }; Returns: string };
       gym_reviews_for: {

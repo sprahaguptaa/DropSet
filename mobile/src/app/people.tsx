@@ -5,6 +5,7 @@ import { ActivityIndicator, KeyboardAvoidingView, Platform, StyleSheet } from 'r
 
 import { EmptyState, ScreenHeader, ScrollScreen } from '@/components/layout';
 import { PersonRow } from '@/components/People';
+import { UsernameCard } from '@/components/Social';
 import { T } from '@/components/Text';
 import { TextField } from '@/components/TextField';
 import { searchPeople, type Person } from '@/lib/api';
@@ -35,6 +36,7 @@ export default function People() {
     <KeyboardAvoidingView style={styles.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScreenHeader title="Find people" width={layout.form} />
       <ScrollScreen width={layout.form} gap={space.m}>
+        <UsernameCard />
         <TextField
           label="Search"
           icon={MagnifyingGlass}

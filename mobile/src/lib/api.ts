@@ -410,7 +410,7 @@ export type FeedItem = {
   item_id: string;
   at: string;
   user_id: string;
-  username: string;
+  username: string | null; // null only on your own posts before you've picked one
   display_name: string | null;
   avatar_url: string | null;
   logged_on: string | null;
@@ -434,12 +434,12 @@ export async function getFeed(before?: string): Promise<FeedItem[]> {
   return (data ?? []) as FeedItem[];
 }
 
-// Returns whether you now give props.
+// Returns whether you now give props. toggle_props takes both arguments (one of them null).
 export async function toggleProps(item: FeedItem): Promise<boolean> {
-  const { data, error } = await supabase.rpc(
-    'toggle_props',
-    item.item_type === 'workout' ? { p_workout: item.item_id } : { p_goal: item.item_id },
-  );
+  const { data, error } = await supabase.rpc('toggle_props', {
+    p_workout: item.item_type === 'workout' ? item.item_id : null,
+    p_goal: item.item_type === 'goal_hit' ? item.item_id : null,
+  });
   fail(error);
   return !!data;
 }

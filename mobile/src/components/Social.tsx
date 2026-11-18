@@ -1,7 +1,7 @@
 import { router, useFocusEffect } from 'expo-router';
 import { Bell, Handshake, MagnifyingGlass, ShareNetwork, X } from 'phosphor-react-native';
 import { useCallback, useState } from 'react';
-import { StyleSheet, Switch, View } from 'react-native';
+import { Platform, StyleSheet, Switch, View } from 'react-native';
 
 import {
   getPartners,
@@ -26,6 +26,9 @@ import { Press } from './Press';
 import { T } from './Text';
 import { TextField } from './TextField';
 
+// react-native-web colors an "on" switch's thumb teal unless told otherwise (mint/teal is reserved for active passes).
+const WEB_SWITCH: object = Platform.OS === 'web' ? { activeThumbColor: color.card } : {};
+
 const isTaken = (e: unknown) => /duplicate|unique|23505/i.test((e as Error)?.message ?? '');
 
 // Asked before anything social: a username is how people find and follow you.
@@ -34,18 +37,28 @@ export function UsernameCard() {
   const [value, setValue] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [tried, setTried] = useState(false);
   const name = value.trim().toLowerCase();
   const valid = USERNAME_RE.test(name);
+  // Don't flag the format while someone is still typing their first letters.
+  const formatError = value && !valid && (tried || name.length >= 3) ? '3 to 20 characters: a-z, 0-9 and _' : null;
   if (!auth.session || !auth.profile || auth.profile.username) return null;
 
   async function save() {
+    setTried(true);
+    if (!valid) return;
     setBusy(true);
     setError(null);
     try {
       await updateProfile(auth.session!.user.id, { username: name });
-      await auth.refreshProfile();
     } catch (e) {
       setError(isTaken(e) ? 'That username is taken. Try another.' : 'Couldn’t save. Try again.');
+      setBusy(false);
+      return;
+    }
+    try {
+      await auth.refreshProfile(); // saved; this only swaps the card out
+    } catch {
       setBusy(false);
     }
   }
@@ -59,20 +72,33 @@ export function UsernameCard() {
       <TextField
         label="Username"
         value={value}
-        onChangeText={setValue}
+        onChangeText={(t) => {
+          setValue(t);
+          setError(null);
+        }}
         placeholder="e.g. sage_lifts"
         autoCapitalize="none"
         autoCorrect={false}
         maxLength={20}
-        error={value && !valid ? '3 to 20 characters: a-z, 0-9 and _' : error}
-        onSubmitEditing={() => valid && save()}
+        error={formatError ?? error}
+        onSubmitEditing={save}
       />
       <Button label="Save username" variant="dark" size="m" onPress={save} loading={busy} disabled={!valid} />
     </View>
   );
 }
 
-function Toggle({ label, hint, value, onChange, disabled }: { label: string; hint: string; value: boolean; onChange: (v: boolean) => void; disabled?: boolean }) {
+// Flips at once, saves in the background, and flips back if the save fails.
+function Toggle({ label, hint, value, onSave }: { label: string; hint: string; value: boolean; onSave: (v: boolean) => Promise<boolean> }) {
+  const [pending, setPending] = useState<boolean | null>(null);
+  const shown = pending ?? value;
+
+  async function change(v: boolean) {
+    setPending(v);
+    await onSave(v);
+    setPending(null); // saved: the profile now says v; failed: back to the saved value
+  }
+
   return (
     <View style={styles.toggle}>
       <View style={styles.flex}>
@@ -82,11 +108,12 @@ function Toggle({ label, hint, value, onChange, disabled }: { label: string; hin
         </T>
       </View>
       <Switch
-        value={value}
-        onValueChange={onChange}
-        disabled={disabled}
+        value={shown}
+        onValueChange={change}
+        disabled={pending != null}
         trackColor={{ true: color.cobalt, false: color.line }}
         thumbColor={color.card}
+        {...WEB_SWITCH}
         accessibilityLabel={label}
       />
     </View>
@@ -115,25 +142,32 @@ export function PublicProfileSettings() {
   if (!session || !profile || !username) return null;
   const shown = counts?.username === username ? counts : null;
 
+  // Returns whether it saved (the switches roll back when it didn't).
   async function update(patch: Parameters<typeof updateProfile>[1]) {
-    setBusy(true);
     setNote(null);
     try {
       await updateProfile(session!.user.id, patch);
-      await auth.refreshProfile();
     } catch {
       setNote('Couldn’t save that. Try again.');
-    } finally {
-      setBusy(false);
+      return false;
     }
+    await auth.refreshProfile().catch(() => {});
+    return true;
+  }
+
+  async function saveBio() {
+    setBusy(true);
+    await update({ bio: bio.trim() || null });
+    setBusy(false);
   }
 
   async function share() {
+    setNote(null);
     try {
       const how = await shareProfile(username!);
-      setNote(how === 'copied' ? 'Profile link copied.' : null);
+      if (how === 'copied') setNote('Profile link copied.');
     } catch {
-      // share sheet dismissed
+      setNote('Couldn’t share the link. Your profile is at /u/' + username + '.');
     }
   }
 
@@ -153,7 +187,7 @@ export function PublicProfileSettings() {
         <Button label="Find people" variant="ghost" size="s" icon={MagnifyingGlass} onPress={() => router.push('/people')} style={styles.left} />
         <TextField label="Bio" value={bio} onChangeText={setBio} placeholder="What you train, where you’re headed" maxLength={160} />
         {bio.trim() !== (profile.bio ?? '') && (
-          <Button label="Save bio" variant="dark" size="s" onPress={() => update({ bio: bio.trim() || null })} loading={busy} style={styles.left} />
+          <Button label="Save bio" variant="dark" size="s" onPress={saveBio} loading={busy} style={styles.left} />
         )}
       </View>
       <View style={[styles.card, shadow.card]}>
@@ -161,27 +195,94 @@ export function PublicProfileSettings() {
           label="Show my check-ins"
           hint="Your daily log and streak, on your profile and in followers’ feeds."
           value={profile.show_checkins}
-          onChange={(v) => update({ show_checkins: v })}
-          disabled={busy}
+          onSave={(v) => update({ show_checkins: v })}
         />
         <Toggle
           label="Show which gym I’m at"
           hint="Off by default. When on, check-ins include the gym name."
           value={profile.share_gym}
-          onChange={(v) => update({ share_gym: v })}
-          disabled={busy}
+          onSave={(v) => update({ share_gym: v })}
         />
         <Toggle
           label="Show my goals"
           hint="Your goals, progress and goal hits."
           value={profile.show_goals}
-          onChange={(v) => update({ show_goals: v })}
-          disabled={busy}
+          onSave={(v) => update({ show_goals: v })}
         />
       </View>
       {note && (
-        <T v="footnote" c={note.startsWith('Couldn') ? 'danger' : 'muted'}>
+        <T v="footnote" c={note.startsWith('Couldn') ? 'danger' : 'muted'} accessibilityLiveRegion="polite">
           {note}
+        </T>
+      )}
+    </View>
+  );
+}
+
+function partnerLine(p: Partner) {
+  if (p.status === 'incoming') return 'Wants to be your partner';
+  if (p.status === 'requested') return 'Request sent';
+  const streak = p.streak != null ? ` · ${streakLabel(p.streak)}` : ''; // null when they hide check-ins
+  if (p.logged_today) return `Logged today${streak}`;
+  if (p.missed_yesterday) return 'Missed yesterday. A nudge might help.';
+  return `Not logged yet today${streak}`;
+}
+
+function PartnerRow({ p, today, onChanged }: { p: Partner; today: string; onChanged: () => void }) {
+  const [busy, setBusy] = useState(false);
+  const [nudged, setNudged] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run(task: () => Promise<void>, failText: string) {
+    setBusy(true);
+    setError(null);
+    try {
+      await task();
+    } catch {
+      setError(failText);
+    } finally {
+      setBusy(false);
+    }
+  }
+  const act = (action: 'accept' | 'end') => run(async () => { await setPartner(p.id, action); onChanged(); }, 'That didn’t work. Try again.');
+
+  return (
+    <View style={styles.partnerWrap}>
+      <View style={styles.partner}>
+        <Press onPress={() => openProfile(p.username)} haptic={false} accessibilityRole="link" style={styles.who}>
+          <Avatar url={p.avatar_url} name={displayName(p)} size={40} />
+          <View style={styles.flex}>
+            <T v="headline" numberOfLines={1}>
+              {displayName(p)}
+            </T>
+            <T v="footnote" c={p.status === 'partners' && p.missed_yesterday && !p.logged_today ? 'ink2' : 'muted'}>
+              {partnerLine(p)}
+            </T>
+          </View>
+        </Press>
+        {p.status === 'incoming' ? (
+          <View style={styles.actions}>
+            <Button label="Accept" variant="dark" size="s" disabled={busy} onPress={() => act('accept')} />
+            <Press onPress={() => act('end')} disabled={busy} hitSlop={10} haptic={false} accessibilityRole="button" accessibilityLabel="Decline">
+              <X size={16} color={color.muted} weight="bold" />
+            </Press>
+          </View>
+        ) : p.status === 'requested' ? (
+          <Button label="Cancel" variant="ghost" size="s" disabled={busy} onPress={() => act('end')} />
+        ) : !p.logged_today ? (
+          <Button
+            label={nudged ? 'Nudged' : 'Nudge'}
+            variant="outline"
+            size="s"
+            icon={Bell}
+            disabled={nudged || busy}
+            onPress={() => run(async () => { await nudge(p.id, today); setNudged(true); }, 'Nudges need you to follow each other.')}
+          />
+        ) : null}
+      </View>
+      {error && (
+        <T v="footnote" c="danger">
+          {error}
         </T>
       )}
     </View>
@@ -193,7 +294,6 @@ export function PartnersCard() {
   const { session } = useAuth();
   const userId = session?.user.id ?? null;
   const [loaded, setLoaded] = useState<{ userId: string; partners: Partner[]; today: string } | null>(null);
-  const [nudged, setNudged] = useState<string[]>([]);
   const load = useCallback(() => {
     if (!userId) return;
     const today = localDate();
@@ -206,7 +306,6 @@ export function PartnersCard() {
 
   const current = loaded?.userId === userId ? loaded : null;
   if (!current) return null;
-  const act = (id: string, action: 'accept' | 'end') => setPartner(id, action).then(load).catch(() => {});
 
   return (
     <View style={styles.block}>
@@ -220,46 +319,7 @@ export function PartnersCard() {
             </T>
           </View>
         ) : (
-          current.partners.map((p) => (
-            <View key={p.id} style={styles.partner}>
-              <Press onPress={() => openProfile(p.username)} haptic={false} accessibilityRole="link" style={styles.who}>
-                <Avatar url={p.avatar_url} name={displayName(p)} size={40} />
-                <View style={styles.flex}>
-                  <T v="headline" numberOfLines={1}>
-                    {displayName(p)}
-                  </T>
-                  <T v="footnote" c={p.status === 'partners' && p.missed_yesterday && !p.logged_today ? 'ink2' : 'muted'}>
-                    {p.status === 'incoming'
-                      ? 'Wants to be your partner'
-                      : p.status === 'requested'
-                        ? 'Request sent'
-                        : p.logged_today
-                          ? `Logged today · ${streakLabel(p.streak ?? 0)}`
-                          : p.missed_yesterday
-                            ? 'Missed yesterday. A nudge might help.'
-                            : `Not logged yet today · ${streakLabel(p.streak ?? 0)}`}
-                  </T>
-                </View>
-              </Press>
-              {p.status === 'incoming' ? (
-                <View style={styles.actions}>
-                  <Button label="Accept" variant="dark" size="s" onPress={() => act(p.id, 'accept')} />
-                  <Press onPress={() => act(p.id, 'end')} hitSlop={8} haptic={false} accessibilityRole="button" accessibilityLabel="Decline">
-                    <X size={16} color={color.muted} weight="bold" />
-                  </Press>
-                </View>
-              ) : p.status === 'partners' && !p.logged_today ? (
-                <Button
-                  label={nudged.includes(p.id) ? 'Nudged' : 'Nudge'}
-                  variant="outline"
-                  size="s"
-                  icon={Bell}
-                  disabled={nudged.includes(p.id)}
-                  onPress={() => nudge(p.id, current.today).then(() => setNudged((n) => [...n, p.id])).catch(() => {})}
-                />
-              ) : null}
-            </View>
-          ))
+          current.partners.map((p) => <PartnerRow key={`${p.id}:${p.status}`} p={p} today={current.today} onChanged={load} />)
         )}
       </View>
     </View>
@@ -276,7 +336,14 @@ export function NudgeBanner() {
     useCallback(() => {
       if (!userId) return;
       takeNudges()
-        .then((n) => n.length && setLoaded((prev) => ({ userId, nudges: [...n, ...(prev?.userId === userId ? prev.nudges : [])] })))
+        // One entry per person (newest first): three nudges from Matt are still just Matt.
+        .then((n) =>
+          n.length &&
+          setLoaded((prev) => {
+            const all = [...n, ...(prev?.userId === userId ? prev.nudges : [])];
+            return { userId, nudges: all.filter((x, i) => all.findIndex((y) => y.from_username === x.from_username) === i) };
+          }),
+        )
         .catch(() => {});
     }, [userId]),
   );
@@ -313,6 +380,7 @@ const styles = StyleSheet.create({
   headRow: { flexDirection: 'row', alignItems: 'center', gap: space.m },
   left: { alignSelf: 'flex-start' },
   toggle: { flexDirection: 'row', alignItems: 'center', gap: space.m, paddingVertical: space.xs },
+  partnerWrap: { gap: space.xs },
   partner: { flexDirection: 'row', alignItems: 'center', gap: space.m },
   who: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: space.m },
   actions: { flexDirection: 'row', alignItems: 'center', gap: space.m },

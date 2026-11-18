@@ -8,16 +8,23 @@ export function profileUrl(username: string) {
 }
 
 // The system share sheet where there is one; on desktop browsers the link is copied instead.
-export async function shareProfile(username: string): Promise<'shared' | 'copied'> {
+// 'cancelled' means the person closed the sheet; anything that throws is a real failure.
+export async function shareProfile(username: string): Promise<'shared' | 'copied' | 'cancelled'> {
   const url = profileUrl(username);
   if (Platform.OS === 'web') {
     if (typeof navigator.share === 'function') {
-      await navigator.share({ title: 'DropSet', url });
-      return 'shared';
+      try {
+        await navigator.share({ title: 'DropSet', url });
+        return 'shared';
+      } catch (e) {
+        if ((e as Error)?.name === 'AbortError') return 'cancelled';
+        throw e;
+      }
     }
     await navigator.clipboard.writeText(url);
     return 'copied';
   }
-  await Share.share({ message: url, url });
-  return 'shared';
+  // iOS shows `url` as the link (adding it to `message` too would show it twice); Android only reads `message`.
+  const result = await Share.share(Platform.OS === 'ios' ? { url } : { message: url });
+  return result.action === Share.dismissedAction ? 'cancelled' : 'shared';
 }

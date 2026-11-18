@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
 import { setFollow, type Person } from '@/lib/api';
+import { useAuth } from '@/providers/AuthProvider';
 import { color, radius, shadow, space } from '@/theme/tokens';
 
 import { Avatar } from './Avatar';
@@ -11,19 +12,25 @@ import { Button } from './Button';
 import { Press } from './Press';
 import { T } from './Text';
 
-export const displayName = (p: { display_name: string | null; username: string }) => p.display_name?.trim() || `@${p.username}`;
+export const displayName = (p: { display_name: string | null; username: string | null }) =>
+  p.display_name?.trim() || (p.username ? `@${p.username}` : 'DropSet member');
 
-export function openProfile(username: string) {
-  router.push({ pathname: '/u/[username]', params: { username } });
+// Your own posts can come before you have a username; those open your Profile instead.
+export function openProfile(username: string | null) {
+  if (username) router.push({ pathname: '/u/[username]', params: { username } });
+  else router.navigate('/profile');
 }
 
 // Follow / Following toggle. Keeps its own state so lists don't need to reload.
+// Following needs a username of your own, so without one it sends you to Profile to pick it.
 export function FollowButton({ userId, following: initial, onChange }: { userId: string; following: boolean; onChange?: (following: boolean) => void }) {
+  const { profile } = useAuth();
   const [following, setFollowing] = useState(initial);
   const [busy, setBusy] = useState(false);
   const [failed, setFailed] = useState(false);
 
   async function toggle() {
+    if (!profile?.username) return router.navigate('/profile');
     setBusy(true);
     setFailed(false);
     try {

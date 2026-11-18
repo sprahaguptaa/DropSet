@@ -547,8 +547,10 @@ declare me uuid := (select auth.uid());
 begin
   if p_follow then
     -- One answer for every refusal, so it can't be used to learn that someone blocked you.
+    -- Both people need a username, so every follower shows up in follower lists.
     if me is null or p_user = me or public.is_blocked(me, p_user)
-       or not exists (select 1 from public.profiles where id = p_user and username is not null) then
+       or not exists (select 1 from public.profiles where id = p_user and username is not null)
+       or not exists (select 1 from public.profiles where id = me and username is not null) then
       raise exception 'not allowed' using errcode = '42501';
     end if;
     insert into public.follows (follower_id, followee_id) values (me, p_user) on conflict do nothing;

@@ -65,6 +65,7 @@ function Actions({ p, userId, today, onChanged }: { p: PublicProfile; userId: st
     setError(null);
     try {
       await task();
+      setConfirm(null); // a finished block/report never leaves the next tap armed
       if (reload) onChanged();
     } catch {
       setError('That didn’t work. Try again.');
@@ -202,11 +203,12 @@ export default function PublicProfileScreen() {
                 {p.bio}
               </T>
             ) : null}
-            <Counts p={p} />
+            {!p.i_blocked && <Counts p={p} />}
             {p.is_me ? (
               <Button label="Edit profile" variant="outline" size="s" onPress={() => router.navigate('/profile')} style={styles.left} />
             ) : (
-              <Actions p={p} userId={userId} today={today} onChanged={() => setVersion((v) => v + 1)} />
+              // Remounts when block state flips, so nothing armed before carries over.
+              <Actions key={`${p.id}:${p.i_blocked}`} p={p} userId={userId} today={today} onChanged={() => setVersion((v) => v + 1)} />
             )}
           </View>
 

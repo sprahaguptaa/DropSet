@@ -17,16 +17,17 @@ export default function FollowList() {
   const userId = session?.user.id ?? null;
   const key = `${username}:${followers}:${userId}`;
   const [loaded, setLoaded] = useState<{ key: string; people: Person[] | null } | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!userId) return;
     getFollowList(username, followers)
       .then((people) => setLoaded({ key, people }))
-      .catch(() => setLoaded({ key, people: null }));
-  }, [username, followers, userId, key]);
+      .catch(() => setLoaded({ key: `${key}:${attempt}`, people: null }));
+  }, [username, followers, userId, key, attempt]);
 
   if (ready && !session) return <Redirect href={{ pathname: '/login', params: { next: `/u/${username}/${list}` } }} />;
-  const current = loaded?.key === key ? loaded : null;
+  const current = loaded?.key === key || loaded?.key === `${key}:${attempt}` ? loaded : null;
 
   return (
     <View style={styles.root}>
@@ -34,7 +35,7 @@ export default function FollowList() {
       {!current ? (
         <ActivityIndicator color={color.ink} style={{ marginTop: space.huge }} />
       ) : !current.people ? (
-        <EmptyState icon={UsersThree} title="Couldn’t load this list" body="Check your connection and try again." />
+        <EmptyState icon={UsersThree} title="Couldn’t load this list" body="Check your connection and try again." action="Try again" onAction={() => setAttempt((a) => a + 1)} />
       ) : current.people.length === 0 ? (
         <EmptyState icon={UsersThree} title={followers ? 'No followers yet' : 'Not following anyone yet'} body="People show up here once they connect." />
       ) : (

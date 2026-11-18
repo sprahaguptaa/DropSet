@@ -32,6 +32,7 @@ free promotion for that gym and fresh, verified data for travelers.
 | Front desk | `/desk` for `gym_staff`: scan (camera) or type a code, plus DropSet check-ins, visitors (new vs returning), passes sold and revenue for the last 30 days |
 | Daily check-in | "Do you train most days?" (`training_mode`), Today card on Explore for daily trainers and on Profile, log a day in two taps (`/log`), streak (`my_streak`, rest days count), this-week strip |
 | Goals | Bodyweight, lift (squat / bench / deadlift / press) and climbing-grade goals on `/goals` and a Profile card; log progress there or from the daily log; the database marks "Goal hit" |
+| Social | Usernames, public profiles (`/u/<username>`) with privacy toggles, follow / followers / following, Find people, Feed tab (check-ins + goal hits from people you follow), props, nudges, accountability partners, block and report |
 | Platform | Expo app (web + Expo Go), deployed on Vercel, no `.env` needed, Supabase email links go to the live site |
 
 ## Decisions
@@ -81,13 +82,14 @@ Status: ⬜ not started · 🟨 in progress · ✅ done
 - Goals section on Profile with progress toward each target; log a new PR from the daily check-in.
 - **Done when**: a user sets "Deadlift 405 lb", logs entries over time, sees progress, and gets a "Goal hit" moment when they reach it.
 
-### Phase 4: Social layer ⬜
+### Phase 4: Social layer ✅ (2026-11-18)
 - Profiles: unique `username`, `bio`, avatar (Phase 0), privacy toggles `share_gym` (default off), `show_checkins` (default on), `show_goals` (default on).
 - `follows` (follower_id, followee_id); followers / following counts on Profile; find people by username; share-profile link.
 - **Feed tab** (becomes the 5th tab): check-ins and PRs from people you follow, respecting their toggles. The gym name appears only if that user turned on `share_gym`; handled in one feed RPC so privacy can't be bypassed from the client.
 - **Props** (one-tap kudos), **nudge** a friend (in-app), opt-in **accountability partners** (mutual; only partners see a missed day).
 - `blocks` and `reports` tables; blocked users can't see or follow each other; report from any profile or post.
 - **Done when**: two accounts can follow each other, see each other's check-ins and PRs in the feed per their toggles, give props, nudge, block, and report.
+- Shipped as: the feed shows check-ins and **goal hits** (single goal entries stay on the Goals page). Usernames are picked on first visit to Feed or Profile. Nudges and partner updates are in-app only. Following gyms is still Phase 6.
 
 ### Phase 5: Lifter-grade facts ⬜
 - Equipment facts per gym: squat racks (count), deadlift platforms, bumper plates, specialty bars, chalk allowed, turf / sled, climbing: bouldering / top rope / lead. Lookup table + `gym_equipment` (gym_id, item, value, verified_count, last_verified_at).
