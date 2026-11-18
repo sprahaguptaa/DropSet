@@ -54,10 +54,35 @@ export function goalProgress(g: GoalLike, entries: EntryLike[]) {
   return { current, pct };
 }
 
-// Parse a typed number ("184.5", "405", "V6") into a value the database accepts, or null.
+const UNIT_WORDS: Record<string, WeightUnit> = {
+  lb: 'lb',
+  lbs: 'lb',
+  pound: 'lb',
+  pounds: 'lb',
+  kg: 'kg',
+  kgs: 'kg',
+  kilo: 'kg',
+  kilos: 'kg',
+};
+
+// The weight unit typed after a number ("90 kg" -> "kg"), if any.
+export function typedUnit(text: string): WeightUnit | null {
+  const m = /([a-z]+)\s*$/i.exec(text.trim());
+  return m ? (UNIT_WORDS[m[1].toLowerCase()] ?? null) : null;
+}
+
+// Parse what someone typed ("184.5", "405 lb", "90kg", "V6") into a value the database accepts, or
+// null. A weight typed in the other unit ("90 kg" on a goal in lb) is null rather than silently wrong.
 export function parseValue(text: string, unit: string) {
-  const s = text.trim().replace(/^v/i, '').replace(',', '.');
-  if (!/^d+(.d+)?$/.test(s)) return null;
+  let s = text.trim().toLowerCase().replace(',', '.');
+  if (unit === 'v') {
+    s = s.replace(/^v\s*/, '');
+  } else {
+    const typed = typedUnit(s);
+    if (typed && typed !== unit) return null;
+    s = s.replace(/\s*[a-z]+$/, '');
+  }
+  if (!/^\d+(\.\d+)?$/.test(s)) return null;
   const n = Number(s);
   if (unit === 'v') return Number.isInteger(n) && n <= 17 ? n : null;
   return n <= 2000 ? Math.round(n * 10) / 10 : null;
@@ -66,7 +91,10 @@ export function parseValue(text: string, unit: string) {
 // What to tell someone whose typed value doesn't parse (null when it's blank or fine).
 export function valueError(text: string, unit: string) {
   if (!text.trim() || parseValue(text, unit) != null) return null;
-  return unit === 'v' ? 'A whole V grade from 0 to 17' : `A number up to 2000 ${unit}`;
+  if (unit === 'v') return 'A whole V grade from 0 to 17';
+  const typed = typedUnit(text);
+  if (typed && typed !== unit) return `This goal is in ${unit}`;
+  return `A number up to 2000 ${unit}`;
 }
 
 // Friendlier text for the database's checks on an entry.
