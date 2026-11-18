@@ -462,7 +462,8 @@ language sql stable security definer set search_path = '' as $$
 $$;
 create function public.reports_today(p_user uuid) returns int
 language sql stable security definer set search_path = '' as $$
-  select count(*)::int from public.user_reports where reporter_id = p_user and created_at > now() - interval '1 day';
+  select count(*)::int from public.user_reports
+   where reporter_id = p_user and p_user = (select auth.uid()) and created_at > now() - interval '1 day';  -- only ever your own count
 $$;
 revoke all on function public.workout_owner(uuid) from public, anon;
 revoke all on function public.reports_today(uuid) from public, anon;
@@ -497,7 +498,8 @@ create policy "report someone" on public.user_reports
 -- At most 10 new goals a day (stops farming "goal hits" into followers' feeds).
 create function public.goals_today(p_user uuid) returns int
 language sql stable security definer set search_path = '' as $
-  select count(*)::int from public.goals where user_id = p_user and created_at > now() - interval '1 day';
+  select count(*)::int from public.goals
+   where user_id = p_user and p_user = (select auth.uid()) and created_at > now() - interval '1 day';  -- only ever your own count
 $;
 revoke all on function public.goals_today(uuid) from public, anon;
 grant execute on function public.goals_today(uuid) to authenticated;
